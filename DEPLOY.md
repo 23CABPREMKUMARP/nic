@@ -19,6 +19,10 @@ CLERK_SECRET_KEY=sk_test_...
 DATABASE_URL="postgresql://user:password@host:5432/dbname?sslmode=require"
 ```
 
+> ⚠️ **CRITICAL: Fix for "Missing publishableKey" Error**
+> If your build fails with `Error: @clerk/clerk-react: Missing publishableKey`, it means you have NOT added the keys above to Vercel.
+> Go to **Settings -> Environment Variables** on Vercel and add them immediately.
+
 ## 3. Database Migration
 Since Vercel cannot write to the file system, you must run migrations against your remote database before deploying.
 
