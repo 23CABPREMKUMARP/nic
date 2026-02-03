@@ -16,17 +16,42 @@ export default function Navbar() {
     return (
         <nav className="fixed top-0 left-0 w-full z-50 glass border-b border-white/10 px-6 py-4">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
-                <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2">
-                    {/* Logo Icon could go here */}
-                    <span className="text-green-400">Nilgiri</span>
-                    <span className="text-white/80">{lang === 'EN' ? 'Pass' : 'பாஸ்'}</span>
+                <Link href="/" className="text-2xl font-bold tracking-tighter flex items-center gap-2 group">
+                    <motion.div whileHover={{ rotate: 10 }} transition={{ type: "spring", stiffness: 300 }}>
+                        {/* Logo Icon Placeholder */}
+                        <span className="text-3xl">🏔️</span>
+                    </motion.div>
+                    <span className="text-green-400 group-hover:text-green-300 transition-colors">Nilgiri</span>
+                    <span className="text-white/80 group-hover:text-white transition-colors">{lang === 'EN' ? 'Pass' : 'பாஸ்'}</span>
                 </Link>
 
                 {/* Desktop Menu */}
                 <div className="hidden md:flex items-center gap-8">
-                    <Link href="/dashboard" className="text-white/80 hover:text-white transition-colors">{lang === 'EN' ? 'Dashboard' : 'டாஷ்போர்டு'}</Link>
-                    <Link href="/map" className="text-white/80 hover:text-white transition-colors">{lang === 'EN' ? 'Smart Map' : 'வரைபடம்'}</Link>
-                    <Link href="/about" className="text-white/80 hover:text-white transition-colors">About</Link>
+                    <Link href="/dashboard">
+                        <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                            {lang === 'EN' ? 'Dashboard' : 'டாஷ்போர்டு'}
+                        </motion.div>
+                    </Link>
+                    <Link href="/parking">
+                        <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                            {lang === 'EN' ? 'Parking' : 'வாகன நிறுத்தம்'}
+                        </motion.div>
+                    </Link>
+                    <Link href="/tourism">
+                        <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                            {lang === 'EN' ? 'Tourism' : 'சுற்றுலா'}
+                        </motion.div>
+                    </Link>
+                    <Link href="/map">
+                        <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                            {lang === 'EN' ? 'Smart Map' : 'வரைபடம்'}
+                        </motion.div>
+                    </Link>
+                    <Link href="/about">
+                        <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
+                            About
+                        </motion.div>
+                    </Link>
                     <button onClick={toggleLang} className="text-white/80 hover:text-white transition-colors font-mono border border-white/20 rounded px-2 py-1 text-xs">
                         {lang === 'EN' ? 'TA' : 'EN'}
                     </button>
@@ -69,6 +94,8 @@ export default function Navbar() {
                     >
                         <div className="p-4 flex flex-col gap-4">
                             <Link href="/dashboard" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Dashboard</Link>
+                            <Link href="/parking" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Parking</Link>
+                            <Link href="/tourism" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Tourism</Link>
                             <Link href="/map" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Smart Map</Link>
                             <div className="pt-2 border-t border-white/10 mt-2">
                                 <SignedOut>

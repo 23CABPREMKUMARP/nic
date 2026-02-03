@@ -5,6 +5,8 @@ import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import DashboardList from "@/components/DashboardList";
+import { DashboardCardAnimator } from "@/components/DashboardAnimator";
 
 export default async function Dashboard() {
     const user = await currentUser();
@@ -21,86 +23,70 @@ export default async function Dashboard() {
     return (
         <>
             <Navbar />
-            <div className="pt-24 px-6 max-w-7xl mx-auto space-y-8">
+            <div className="pt-24 px-6 max-w-7xl mx-auto space-y-8 pb-12">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+                    <div>
+                        <h1 className="text-3xl font-bold text-white drop-shadow-md">Dashboard</h1>
+                        <p className="text-white/80 drop-shadow-sm">Welcome back, {user.firstName || 'Traveler'}</p>
+                    </div>
+
                     <Link href="/apply">
-                        <Button variant="primary">
+                        <Button className="bg-white text-green-800 hover:bg-green-50 font-bold shadow-lg">
                             <Plus className="w-4 h-4 mr-2" /> Apply New Pass
                         </Button>
                     </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* My Passes Sections - Spans 2 cols if needed, or just takes one slot but vertically grows */}
-                    <div className="glass-card p-6 min-h-[200px] md:col-span-2 flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
+                    {/* My Passes Sections */}
+                    <DashboardCardAnimator className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 min-h-[200px] md:col-span-2 flex flex-col border border-white/20">
+                        <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                             <div>
-                                <h2 className="text-xl font-bold text-white">My E-Passes</h2>
-                                <p className="text-white/60 text-sm">View and manage your entry passes.</p>
+                                <h2 className="text-xl font-bold text-gray-900">My E-Passes</h2>
+                                <p className="text-gray-500 text-sm">View and manage your entry passes.</p>
                             </div>
                         </div>
 
-                        <div className="space-y-3 mt-2">
-                            {passes.length === 0 ? (
-                                <div className="p-8 border border-dashed border-white/20 rounded-lg text-center text-white/40">
-                                    No active passes found. apply for one!
-                                </div>
-                            ) : (
-                                passes.map(pass => (
-                                    <Link key={pass.id} href={`/pass/${pass.id}`}>
-                                        <div className="bg-white/5 border border-white/10 p-4 rounded-lg flex items-center justify-between hover:bg-white/10 transition-colors group">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`p-3 rounded-full ${pass.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                                    <Ticket size={24} />
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-white group-hover:text-green-400 transition-colors">{pass.vehicleNo}</h3>
-                                                    <div className="flex items-center gap-3 text-xs text-white/60 mt-1">
-                                                        <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(pass.visitDate).toLocaleDateString()}</span>
-                                                        <span className="flex items-center gap-1"><Car size={12} /> {pass.vehicleType}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${pass.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' :
-                                                        pass.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                            'bg-white/10 text-white/60'
-                                                    }`}>
-                                                    {pass.status}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))
-                            )}
+                        <div className="space-y-3">
+                            <DashboardList passes={passes} />
                         </div>
-                    </div>
+                    </DashboardCardAnimator>
 
                     <div className="space-y-6">
-                        <div className="glass-card p-6">
-                            <h2 className="text-xl font-bold mb-2">Parking Status</h2>
-                            <p className="text-white/60 text-sm">Real-time availability.</p>
-                            <div className="mt-4">
-                                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                                    <span>Ooty Lake</span>
-                                    <span className="text-green-400">Available</span>
+                        <DashboardCardAnimator delay={0.2} className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20">
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">Parking Status</h2>
+                            <p className="text-gray-500 text-sm mb-4">Real-time availability.</p>
+                            <div className="space-y-1">
+                                <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded -mx-2">
+                                    <span className="text-gray-700 font-medium">Ooty Lake</span>
+                                    <span className="text-green-600 text-sm font-bold bg-green-50 px-2 py-1 rounded">Available</span>
                                 </div>
-                                <div className="flex justify-between items-center py-2 border-b border-white/10">
-                                    <span>Doddabetta</span>
-                                    <span className="text-red-400">Full</span>
+                                <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded -mx-2">
+                                    <span className="text-gray-700 font-medium">Doddabetta</span>
+                                    <span className="text-red-500 text-sm font-bold bg-red-50 px-2 py-1 rounded">Full</span>
+                                </div>
+                                <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 px-2 rounded -mx-2">
+                                    <span className="text-gray-700 font-medium">Rose Garden</span>
+                                    <span className="text-green-600 text-sm font-bold bg-green-50 px-2 py-1 rounded">Available</span>
                                 </div>
                             </div>
-                        </div>
+                            <Link href="/parking">
+                                <Button className="w-full mt-4 bg-gray-900 hover:bg-black text-white">Book Parking</Button>
+                            </Link>
+                        </DashboardCardAnimator>
 
-                        <div className="glass-card p-6">
-                            <h2 className="text-xl font-bold mb-2">Notifications</h2>
-                            <div className="mt-4 space-y-2">
-                                <div className="bg-yellow-500/10 p-2 rounded border border-yellow-500/20 text-xs text-yellow-200">
-                                    Traffic alert near Coonoor.
+                        <DashboardCardAnimator delay={0.4} className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20">
+                            <h2 className="text-xl font-bold text-gray-900 mb-2">Notifications</h2>
+                            <div className="mt-4 space-y-3">
+                                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 flex gap-3 items-start">
+                                    <span className="text-yellow-600 mt-0.5">⚠️</span>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-900">Traffic Alert</p>
+                                        <p className="text-xs text-gray-600 mt-1">Heavy congestion near Coonoor Sims Park due to flower show.</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        </DashboardCardAnimator>
                     </div>
                 </div>
             </div>

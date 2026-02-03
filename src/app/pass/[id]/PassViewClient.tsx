@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Download, Share2, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import { toPng, toBlob } from 'html-to-image';
 
 export default function PassViewClient({ pass }: { pass: any }) {
     const [qrUrl, setQrUrl] = useState('');
@@ -20,6 +21,44 @@ export default function PassViewClient({ pass }: { pass: any }) {
                 console.error(err);
             });
     }, [pass.qrCode]);
+
+    const handleSave = async () => {
+        const element = document.getElementById('pass-capture-container');
+        if (element) {
+            try {
+                const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 2 });
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `Nilgiri-E-Pass-${pass.vehicleNo}.png`;
+                link.click();
+            } catch (err) {
+                console.error("Save failed", err);
+            }
+        }
+    };
+
+    const handleShare = async () => {
+        const element = document.getElementById('pass-capture-container');
+        if (element) {
+            try {
+                const blob = await toBlob(element, { cacheBust: true, pixelRatio: 2 });
+                if (blob) {
+                    const file = new File([blob], `pass-${pass.vehicleNo}.png`, { type: 'image/png' });
+                    if (navigator.share) {
+                        await navigator.share({
+                            title: 'Nilgiri E-Pass',
+                            text: `Here is the E-Pass for vehicle ${pass.vehicleNo}`,
+                            files: [file]
+                        });
+                    } else {
+                        alert('Web Share API not supported in this browser');
+                    }
+                }
+            } catch (err) {
+                console.error("Share failed", err);
+            }
+        }
+    };
 
     return (
         <>
@@ -93,10 +132,18 @@ export default function PassViewClient({ pass }: { pass: any }) {
                         )}
 
                         <div className="mt-8 flex gap-3 w-full">
-                            <Button variant="secondary" className="flex-1 bg-gray-100 hover:bg-gray-200 border-none text-gray-700 justify-center">
+                            <Button
+                                onClick={handleShare}
+                                variant="secondary"
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 border-none text-gray-700 justify-center"
+                            >
                                 <Share2 size={18} className="mr-2" /> Share
                             </Button>
-                            <Button variant="primary" className="flex-1 justify-center">
+                            <Button
+                                onClick={handleSave}
+                                variant="primary"
+                                className="flex-1 justify-center"
+                            >
                                 <Download size={18} className="mr-2" /> Save
                             </Button>
                         </div>
@@ -110,6 +157,41 @@ export default function PassViewClient({ pass }: { pass: any }) {
                         backgroundPosition: '0 10px'
                     }}></div>
                 </motion.div>
+
+                {/* Hidden container for rendering the image to capture */}
+                <div id="pass-capture-container" className="fixed top-[-9999px] left-[-9999px] w-[400px]">
+                    <div className="bg-white rounded-3xl overflow-hidden shadow-2xl relative">
+                        <div className="bg-[#0f3b28] p-6 text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-cover"></div>
+                            <h1 className="text-white text-2xl font-bold relative z-10">Nilgiri E-Pass</h1>
+                            <p className="text-white/60 text-sm relative z-10">Official Tourism Entry</p>
+                        </div>
+
+                        <div className="p-8 flex flex-col items-center">
+                            {qrUrl && <img src={qrUrl} alt="QR Code" className="w-48 h-48 object-contain mix-blend-multiply mb-6" />}
+
+                            <div className="text-center mb-6">
+                                <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">Vehicle Number</p>
+                                <p className="text-3xl font-bold text-gray-800 font-mono">{pass.vehicleNo}</p>
+                            </div>
+
+                            <div className="w-full border-t border-gray-100 pt-6 space-y-4">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Date</span>
+                                    <span className="font-bold">{format(new Date(pass.visitDate), 'dd MMM yyyy')}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Members</span>
+                                    <span className="font-bold">{pass.membersCount}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Type</span>
+                                    <span className="font-bold">{pass.vehicleType}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </>
     )

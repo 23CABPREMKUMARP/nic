@@ -30,7 +30,8 @@ export async function POST(req: Request) {
                 status: 'ACTIVE',
                 activatedAt: new Date(),
                 activatedBy: user?.id || 'admin'
-            }
+            },
+            include: { user: true }
         });
 
         return NextResponse.json({ success: true, pass: updatedPass });

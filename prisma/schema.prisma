@@ -21,6 +21,7 @@ model User {
   passes        Pass[]
   notifications Notification[]
   adminLogs     AdminLog[]
+  parkingBookings ParkingBooking[]
 }
 
 model Pass {
@@ -72,6 +73,7 @@ model Pass {
   user          User        @relation(fields: [userId], references: [id])
   parkingSlot   ParkingSlot?
   bookedSlot    HeavyVehicleSlot? @relation(fields: [slotId], references: [id])
+  parkingBookings ParkingBooking[]
 }
 
 model HeavyVehicleSlot {
@@ -98,6 +100,8 @@ model ParkingSlot {
   location    Location    @relation(fields: [locationId], references: [id])
 }
 
+// ... (previous models)
+
 model Location {
   id              String      @id @default(uuid())
   name            String      @unique
@@ -110,6 +114,52 @@ model Location {
   
   parkingSlots    ParkingSlot[]
   crowdStats      CrowdStats[]
+  parkingFacilities ParkingFacility[] // New Relation
+}
+
+model ParkingFacility {
+  id          String   @id @default(uuid())
+  locationId  String
+  vehicleType String   // CAR, BIKE, BUS, VAN, HEAVY
+  totalSlots  Int
+  hourlyRate  Float
+  
+  location    Location @relation(fields: [locationId], references: [id])
+  bookings    ParkingBooking[]
+  
+  @@unique([locationId, vehicleType])
+}
+
+model ParkingBooking {
+  id            String   @id @default(uuid())
+  userId        String
+  passId        String?
+  facilityId    String
+  
+  bookingDate   DateTime
+  startTime     DateTime // ISO String or Date
+  endTime       DateTime
+  
+  vehicleNo     String
+  vehicleType   String
+  
+  amount        Float
+  paymentStatus String   @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  paymentId     String?
+  
+  status        String   @default("BOOKED") // BOOKED, ARRIVED, COMPLETED, CANCELLED, NO_SHOW
+  
+  qrCode        String   @unique
+  
+  checkInTime   DateTime?
+  checkOutTime  DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  user          User            @relation(fields: [userId], references: [id])
+  pass          Pass?           @relation(fields: [passId], references: [id])
+  facility      ParkingFacility @relation(fields: [facilityId], references: [id])
 }
 
 model CrowdStats {

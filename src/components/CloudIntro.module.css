@@ -1,0 +1,185 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-color: transparent;
+    animation: fadeOutContainer 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Base Cloud Style */
+.cloudLayer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 140vw;
+    /* Massive */
+    height: auto;
+    opacity: 0;
+    mix-blend-mode: screen;
+    /* Removes black, keeps white */
+    filter: blur(2px) contrast(1.2);
+}
+
+/* Layer 1: Left Foreground - Fast & Big */
+.layerLeftFore {
+    width: 160vw;
+    transform: translate(-100%, -50%) scale(1.8);
+    animation: partLeft 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    /* Custom easing for distinct "Whoosh" */
+    z-index: 20;
+    filter: blur(8px);
+}
+
+/* Layer 2: Right Foreground - Fast & Big */
+.layerRightFore {
+    width: 160vw;
+    transform: translate(0%, -50%) scale(1.8);
+    /* Starting roughly center-right */
+    animation: partRight 2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    z-index: 20;
+    filter: blur(8px);
+}
+
+/* Layer 3: Left Mid - Main Detail */
+.layerLeftMid {
+    width: 120vw;
+    transform: translate(-90%, -60%) scale(1.2) rotate(-5deg);
+    animation: floatLeft 2.5s ease-out forwards;
+    opacity: 0.9;
+    z-index: 10;
+}
+
+/* Layer 4: Right Mid - Main Detail */
+.layerRightMid {
+    width: 120vw;
+    transform: translate(-10%, -40%) scale(1.2) rotate(5deg);
+    animation: floatRight 2.5s ease-out forwards;
+    opacity: 0.9;
+    z-index: 10;
+}
+
+/* Center Pulse Mist */
+.mistPulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200vw;
+    height: 200vh;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 70%);
+    opacity: 0;
+    animation: mistClear 1.5s ease-in-out forwards;
+    z-index: 5;
+}
+
+/* Keyframes */
+
+@keyframes partLeft {
+    0% {
+        transform: translate(-40%, -50%) scale(2);
+        /* Start covering center */
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: translate(-150%, -50%) scale(2.2) rotate(-10deg);
+        /* Move way left */
+        opacity: 0;
+    }
+}
+
+@keyframes partRight {
+    0% {
+        transform: translate(-60%, -50%) scale(2);
+        /* Start covering center */
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.9;
+    }
+
+    100% {
+        transform: translate(50%, -50%) scale(2.2) rotate(10deg);
+        /* Move way right */
+        opacity: 0;
+    }
+}
+
+@keyframes floatLeft {
+    0% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-120%, -50%) scale(1.4);
+        opacity: 0;
+    }
+}
+
+@keyframes floatRight {
+    0% {
+        transform: translate(-50%, -50%) scale(1.2);
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(20%, -50%) scale(1.4);
+        opacity: 0;
+    }
+}
+
+@keyframes mistClear {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+
+    20% {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.5);
+    }
+}
+
+@keyframes fadeOutContainer {
+    0% {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    80% {
+        opacity: 1;
+        pointer-events: none;
+    }
+
+    100% {
+        opacity: 0;
+        pointer-events: none;
+    }
+}

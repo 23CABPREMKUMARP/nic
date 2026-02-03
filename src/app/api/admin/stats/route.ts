@@ -28,11 +28,21 @@ export async function GET() {
             include: { user: true }
         });
 
+        const revenueData = await prisma.parkingBooking.aggregate({
+            _sum: { amount: true },
+            where: { paymentStatus: 'PAID' }
+        });
+
+        // Calculate theoretical pass fees (e.g. 50 per pass) since no explicit field
+        const passRevenue = totalPasses * 50;
+        const totalRevenue = (revenueData._sum.amount || 0) + passRevenue;
+
         return NextResponse.json({
             totalVisitors: totalPasses,
             activeNow: activePasses,
             todayVisitors: todayPasses,
             parkingOccupied,
+            totalRevenue,
             recentActivity: recentPasses
         });
     } catch (error) {

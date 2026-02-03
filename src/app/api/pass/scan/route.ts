@@ -15,7 +15,28 @@ export async function POST(req: Request) {
         });
 
         if (!pass) {
-            return NextResponse.json({ error: "Invalid Pass" }, { status: 404 });
+            // Check for Parking Booking
+            const parking = await prisma.parkingBooking.findUnique({
+                where: { qrCode },
+                include: { user: true, facility: { include: { location: true } } }
+            });
+
+            if (parking) {
+                let parkingWarning = null;
+                if (parking.status === 'CANCELLED') parkingWarning = "BOOKING CANCELLED";
+                if (parking.status === 'NO_SHOW') parkingWarning = "NO SHOW - REFUNDED";
+                if (parking.status === 'ARRIVED') parkingWarning = "ALREADY ARRIVED";
+
+                return NextResponse.json({
+                    type: "PARKING",
+                    pass: null,
+                    parking,
+                    warning: parkingWarning,
+                    validForToday: true
+                });
+            }
+
+            return NextResponse.json({ error: "Invalid Pass or Booking" }, { status: 404 });
         }
 
         const today = new Date();
