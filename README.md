@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nilgiri E-Pass & Crowd Management System
 
-## Getting Started
+A Production-ready Full Stack Web Application built with Next.js 14, Tailwind CSS (Glassmorphism), Prisma, and Clerk Authentication.
 
-First, run the development server:
+## 🚀 Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Standardized E-Pass**: Generate encrypted QR passes for entry.
+- **Smart Parking**: Real-time slot visibility.
+- **Crowd Control**: Live density monitoring and alerts.
+- **Smart Map**: GPS navigation to alternate locations if crowded.
+- **Admin Scanner**: Built-in QR scanner for verification.
+- **Premium UI**: 3D Parallax Nilgiri Hills theme with glassmorphism.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Tech Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS v4 + Framer Motion
+- **Database**: PostgreSQL + Prisma ORM
+- **Auth**: Clerk (Email/Social Login)
+- **Scanning**: HTML5-QRCode
+- **Maps**: Custom Interactive Map (Leaflet/Google Maps placeholder)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📦 Installation
 
-## Learn More
+1. **Clone & Install**
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Environment Setup**
+   Copy `.env.example` to `.env` and fill in your keys:
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `CLERK_SECRET_KEY`
+   - `DATABASE_URL`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. **Database Migration**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. **Run Locally**
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## 📱 User Flow
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Tourist**: Logs in -> Applies for Pass -> Gets QR -> Views Smart Map.
+2. **Admin**: Logs in -> Scans QR at Gate (Allowed/Denied) -> Monitors Crowd Stats.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🎨 Theme
+
+The application uses a "Nilgiri Mist" theme with dark greens, white mist overlays, and glass-morphism cards to reflect the local environment.

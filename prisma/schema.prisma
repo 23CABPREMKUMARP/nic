@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id        String   @id // Clerk ID
+  email     String   @unique
+  name      String?
+  role      String   @default("USER") // "USER", "ADMIN"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  passes        Pass[]
+  notifications Notification[]
+  adminLogs     AdminLog[]
+}
+
+model Pass {
+  id            String      @id @default(uuid())
+  userId        String
+  
+  // Basic Vehicle Info
+  vehicleNo     String
+  vehicleType   String      // "CAR", "BIKE", "BUS", "TRUCK"
+  membersCount  Int
+  visitDate     DateTime
+  
+  // -- Extended Applicant Details --
+  fullName      String?
+  fatherName    String?
+  dob           DateTime?
+  gender        String?
+  mobile        String?
+  email         String?
+  address       String?     // Full permanent address
+  currentStay   String?     // Hotel/Resort info
+  
+  // -- Travel Details --
+  purpose       String?     // "TOURISM", "GOODS", etc.
+  fromLocation  String?
+  toLocation    String?
+  driverName    String?
+  driverLicense String?
+  
+  // -- Documents (URLs) --
+  idProofUrl    String?
+  vehicleRcUrl  String?
+  bookingProof  String?
+  
+  // -- Heavy Vehicle Logic --
+  isHeavyVehicle Boolean    @default(false)
+  slotId         String?    // If booked
+  
+  // Status Cycle: SUBMITTED -> VERIFIED -> ACTIVE -> USED
+  status        String      @default("SUBMITTED") 
+  qrCode        String?     @unique // Null until verified? Or generated but inactive?
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  activatedAt   DateTime?
+  activatedBy   String?
+  
+  user          User        @relation(fields: [userId], references: [id])
+  parkingSlot   ParkingSlot?
+  bookedSlot    HeavyVehicleSlot? @relation(fields: [slotId], references: [id])
+}
+
+model HeavyVehicleSlot {
+  id          String    @id @default(uuid())
+  date        DateTime
+  startTime   String    // "22:00"
+  endTime     String    // "05:00"
+  maxCapacity Int       @default(50)
+  currentBooked Int     @default(0)
+  status      String    @default("OPEN") // "OPEN", "CLOSED"
+  
+  passes      Pass[]
+}
+
+model ParkingSlot {
+  id          String      @id @default(uuid())
+  slotNumber  String
+  locationId  String
+  isOccupied  Boolean     @default(false)
+  type        String
+  passId      String?     @unique
+  
+  pass        Pass?       @relation(fields: [passId], references: [id])
+  location    Location    @relation(fields: [locationId], references: [id])
+}
+
+model Location {
+  id              String      @id @default(uuid())
+  name            String      @unique
+  description     String?
+  latitude        Float
+  longitude       Float
+  type            String      // "PARKING", "ATTRACTION"
+  crowdThreshold  Int         @default(100)
+  currentCount    Int         @default(0)
+  
+  parkingSlots    ParkingSlot[]
+  crowdStats      CrowdStats[]
+}
+
+model CrowdStats {
+  id          String    @id @default(uuid())
+  locationId  String
+  count       Int
+  timestamp   DateTime  @default(now())
+  
+  location    Location  @relation(fields: [locationId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AdminLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  action    String
+  timestamp DateTime @default(now())
+  
+  admin     User     @relation(fields: [adminId], references: [id])
+}
+
+model SystemSettings {
+  key   String @id
+  value String
+}
