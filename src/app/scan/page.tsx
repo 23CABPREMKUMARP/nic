@@ -18,6 +18,11 @@ export default function ScannerPage() {
 
     const startScanning = async () => {
         setCameraError(null);
+        if (!document.getElementById('reader')) {
+            console.warn("Scanner element not ready");
+            return;
+        }
+
         try {
             if (!scannerRef.current) {
                 scannerRef.current = new Html5Qrcode("reader");
@@ -40,7 +45,7 @@ export default function ScannerPage() {
             setIsScanning(true);
         } catch (err: any) {
             console.error("Camera start error:", err);
-            setCameraError(err?.message || "Camera access denied. Please ensure you have granted camera permissions.");
+            setCameraError(err?.message || "Camera failed to start. Please refresh the page and try again.");
         }
     };
 
@@ -159,7 +164,11 @@ export default function ScannerPage() {
 
     const handleReset = () => {
         setScanResult(null);
-        startScanning();
+        setLoading(false);
+        // Start scanning in next tick to ensure #reader is mounted
+        setTimeout(() => {
+            startScanning();
+        }, 100);
     };
 
     return (
