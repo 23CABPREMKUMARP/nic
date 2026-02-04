@@ -43,7 +43,7 @@ const MOCK_SPOTS: ImageSpot[] = [
         distance: '1.2 km'
     },
     {
-        id: 'doddabetta',
+        id: 'doddabetta-peak',
         name: 'Doddabetta Peak',
         tamilName: 'தொட்டபெட்டா சிகரம்',
         image: 'https://images.unsplash.com/photo-1627894483216-2138af692e32?q=80&w=800&auto=format&fit=crop',
@@ -59,7 +59,7 @@ const MOCK_SPOTS: ImageSpot[] = [
         distance: '3.0 km'
     },
     {
-        id: 'pykara',
+        id: 'pykara-falls',
         name: 'Pykara Falls',
         tamilName: 'பைக்காரா நீர்வீழ்ச்சி',
         image: 'https://images.unsplash.com/photo-1632808064973-2e21b778c42b?q=80&w=800&auto=format&fit=crop',

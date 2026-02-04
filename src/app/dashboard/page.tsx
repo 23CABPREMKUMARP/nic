@@ -9,6 +9,8 @@ import { DashboardCardAnimator } from "@/components/DashboardAnimator";
 import ActivePassDisplay from "@/components/ActivePassDisplay";
 import { CrowdEngine } from "@/services/crowdEngine";
 import { TrafficService } from "@/services/trafficService";
+import { EcoStatusBadge } from "@/components/eco/EcoStatusBadge";
+
 
 export default async function Dashboard() {
     const user = await currentUser();
@@ -56,6 +58,12 @@ export default async function Dashboard() {
         alerts.push({ title: 'Traffic Alert', msg: `Heavy congestion near Botanic Garden. Delay: +${trafficGarden.delayMinutes} min.` });
     }
 
+
+    // Fetch Eco Stats (Local API)
+    const ecoRes = await fetch(`http://localhost:3000/api/eco/points?userId=${user.id}`, { cache: 'no-store' });
+    const ecoStats = ecoRes.ok ? await ecoRes.json() : { totalPoints: 0, level: 'Green Explorer', badge: '🌱' };
+
+
     return (
         <>
             <Navbar />
@@ -82,9 +90,11 @@ export default async function Dashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     {/* Auto-Populated Active Pass Section */}
-                    <div className="md:col-span-2">
+                    <div className="md:col-span-2 space-y-8">
+                        <EcoStatusBadge points={ecoStats.totalPoints} level={ecoStats.level} badge={ecoStats.badge} />
                         <ActivePassDisplay initialPass={activePass} />
                     </div>
+
 
                     {/* Right Column: Status & Alerts */}
                     <div className="space-y-6">

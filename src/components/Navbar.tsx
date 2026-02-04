@@ -68,8 +68,19 @@ export default function Navbar() {
                         </Link>
                     )}
                     <Link href="/map">
+                        <div className="flex items-center gap-1 text-xs font-mono text-orange-400 border border-orange-500/30 px-2 py-1 rounded bg-orange-500/10 cursor-help" title="Live Validator Active">
+                            <span className="animate-pulse">●</span> Crowd Density
+                        </div>
+                    </Link>
+                    <Link href="/map">
                         <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
                             {lang === 'EN' ? 'Smart Map' : 'வரைபடம்'}
+                        </motion.div>
+                    </Link>
+                    <Link href="/admin">
+                        <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-purple-400 hover:text-purple-300 transition-colors cursor-pointer font-bold flex items-center gap-1">
+                            <span className="text-lg">🎫</span>
+                            {lang === 'EN' ? 'Validator' : 'டிக்கெட்'}
                         </motion.div>
                     </Link>
                     <Link href="/about">
@@ -145,6 +156,6 @@ export default function Navbar() {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </nav>
+        </nav >
     );
 }

@@ -3,7 +3,10 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BarChart, Users, Car, AlertTriangle, Bell, Settings, QrCode, PlusCircle, IndianRupee, CheckCircle2, Navigation, Sparkles, MapPin, Info } from "lucide-react";
+import { BarChart, Users, Car, AlertTriangle, Bell, Settings, QrCode, PlusCircle, IndianRupee, CheckCircle2, Navigation, Sparkles, MapPin, Info, Ticket, TreePine } from "lucide-react";
+import { TicketValidator } from "@/components/admin/TicketValidator";
+import { AdminEco } from "@/components/admin/AdminEco";
+
 import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart as RechartsBar, Bar, XAxis, Tooltip } from 'recharts';
 import { motion } from "framer-motion";
@@ -410,6 +413,29 @@ export default function AdminDashboard() {
                         {!stats?.recentActivity?.length && <p className="text-gray-500 text-sm">No recent activity.</p>}
                     </div>
                 </motion.div>
+
+                {/* Ticket Validator Module */}
+                <motion.div
+                    variants={itemVariants}
+                    className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 mt-8 border border-white/20"
+                >
+                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <Ticket className="text-purple-600" /> Offline Ticket Validator
+                    </h2>
+                    <TicketValidator />
+                </motion.div>
+
+                {/* Eco Rewards Management */}
+                <motion.div
+                    variants={itemVariants}
+                    className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 mt-8 border border-white/20"
+                >
+                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <TreePine className="text-emerald-600" /> Eco Rewards & Partner Management
+                    </h2>
+                    <AdminEco />
+                </motion.div>
+
             </motion.div>
         </>
     );

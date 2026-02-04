@@ -40,8 +40,8 @@ export interface CongestionFactors {
     parkingScore: number;
     historicalScore: number;
     weatherScore: number;
-    eventScore: number;
-    timingScore: number;
+    eventScore: number; // Kept for future use, processed within history or reports if needed
+    userReportsScore: number;
 }
 
 export interface HourlyPrediction {

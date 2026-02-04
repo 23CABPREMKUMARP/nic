@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic';
 import {
     MapPin, Navigation, Layers, ParkingCircle,
     AlertTriangle, RefreshCw, Compass, ChevronUp, ChevronDown,
-    Car, Bike, Footprints, Filter, X, LayoutGrid, Image as ImageIcon
+    Car, Bike, Footprints, Filter, X, LayoutGrid, Image as ImageIcon, TreePine
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/navigation/SearchBar';
@@ -20,6 +20,12 @@ import ImageSelector from '@/components/navigation/ImageSelector';
 import { VoiceGuide } from '@/services/navigation/VoiceGuide';
 import { HillSafety } from '@/services/navigation/HillSafety';
 import { OOTY_SPOTS } from '@/data/ootyMapData';
+import { RedirectAdvisor, SuggestionCard } from '@/services/redirect/RedirectAdvisor';
+import { ThumbnailUI } from '@/components/traffic/ThumbnailUI';
+import { AdminCrowdPanel } from '@/components/admin/AdminCrowdPanel';
+import { AdminValidator } from '@/components/admin/AdminValidator';
+import { LiveConsent } from '@/components/eco/LiveConsent';
+
 
 // Dynamic import for MapContainer (Leaflet doesn't work well with SSR)
 const MapContainer = dynamic(
@@ -69,6 +75,10 @@ export default function MapPage() {
     const [bottomSheetExpanded, setBottomSheetExpanded] = useState(true);
     const [showBigIconMode, setShowBigIconMode] = useState(false);
     const [showImageSelector, setShowImageSelector] = useState(false);
+    const [redirectSuggestion, setRedirectSuggestion] = useState<SuggestionCard | null>(null);
+    const [showAdminPanel, setShowAdminPanel] = useState(false);
+    const [ecoConsent, setEcoConsent] = useState(false);
+
 
     const watchIdRef = useRef<number | null>(null);
 
@@ -112,6 +122,29 @@ export default function MapPage() {
         setError(null);
 
         try {
+            // STEP 1: VALIDATE DESTINATION (PARKING & CROWD)
+            const validationRes = await fetch('/api/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spotId: destination.id })
+            });
+            const validation = await validationRes.json();
+
+            // Handle Redirection / Blocking
+            if (validation.action === 'REDIRECT' || validation.action === 'BLOCK') {
+                setError(validation.message);
+
+                // Show suggestion if available
+                if (validation.suggestion) {
+                    setRedirectSuggestion(validation.suggestion);
+                }
+
+                // Stop routing if blocked/redirected
+                setIsLoading(false);
+                return;
+            }
+
+            // STEP 2: CALCULATE ROUTE
             const response = await fetch('/api/navigation/route', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -187,6 +220,17 @@ export default function MapPage() {
             id: spot.id
         });
         setBottomSheetExpanded(true);
+
+        // Check for crowd and redirects
+        RedirectAdvisor.checkAndSuggest(spot.id).then(suggestion => {
+            if (suggestion) {
+                setRedirectSuggestion(suggestion);
+                // Announce redirect if voice is active
+                VoiceGuide.announceReroute(`Crowd alert: ${spot.name} is busy. Suggesting ${suggestion.suggestedSpot.name} instead.`);
+            } else {
+                setRedirectSuggestion(null);
+            }
+        });
     }, []);
 
     // Handle spot click from map
@@ -314,19 +358,13 @@ export default function MapPage() {
                 {/* Visual Navigation Buttons */}
                 {!isNavigating && (
                     <div className="absolute top-24 left-4 z-[500] flex flex-col gap-2">
+                        {/* Admin Toggle */}
                         <button
-                            onClick={() => setShowBigIconMode(true)}
+                            onClick={() => setShowAdminPanel(!showAdminPanel)}
                             className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition"
-                            title="Easy Mode"
+                            title="Crowd Control"
                         >
-                            <LayoutGrid className="w-5 h-5 text-blue-600" />
-                        </button>
-                        <button
-                            onClick={() => setShowImageSelector(true)}
-                            className="bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition"
-                            title="Visual Search"
-                        >
-                            <ImageIcon className="w-5 h-5 text-purple-600" />
+                            <AlertTriangle className="w-5 h-5 text-red-600" />
                         </button>
                     </div>
                 )}
@@ -527,7 +565,63 @@ export default function MapPage() {
                         setShowImageSelector(false);
                     }}
                 />
+
+                {/* Redirect Suggestion Overlay */}
+                {redirectSuggestion && !isNavigating && (
+                    <ThumbnailUI
+                        suggestion={redirectSuggestion}
+                        onNavigate={(spotId) => {
+                            handleMapSpotClick(spotId);
+                            setRedirectSuggestion(null);
+                        }}
+                        onDismiss={() => setRedirectSuggestion(null)}
+                        onBook={(spotId) => {
+                            // Mock booking logic
+                            alert(`Parking slot reserved at ${redirectSuggestion.suggestedSpot.name}! Navigation starting...`);
+                            handleMapSpotClick(spotId);
+                            setRedirectSuggestion(null);
+                        }}
+                    />
+                )}
+
+                {/* Admin Panel Overlay */}
+                {showAdminPanel && (
+                    <div className="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                        <div className="relative w-full max-w-4xl max-h-[90vh] overflow-auto">
+                            <button
+                                onClick={() => setShowAdminPanel(false)}
+                                className="absolute top-4 right-4 z-50 bg-white p-2 rounded-full shadow-lg"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                            <AdminCrowdPanel />
+                            <div className="mt-8">
+                                <AdminValidator />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <LiveConsent onConsent={(granted) => {
+
+                    setEcoConsent(granted);
+                    if (granted) {
+                        fetch('/api/eco/location', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId: 'test-user', consent: true })
+                        }).then(() => {
+                            // Award initial points for consenting
+                            fetch('/api/eco/points', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ userId: 'test-user', action: 'SHARE_LOCATION' })
+                            });
+                        });
+                    }
+                }} />
             </main>
         </div>
+
     );
 }
