@@ -1,9 +1,11 @@
+
 import { OOTY_ROADS, OOTY_SPOTS, OOTY_JUNCTIONS } from "@/data/ooty_map_data";
 
 export interface RouteOptions {
     avoidCrowds: boolean;
     hillOptimized: boolean;
-    localRoutes: boolean; // School/Market aware
+    vehicleType: 'CAR' | 'BIKE' | 'BUS';
+    isFoggy: boolean;
 }
 
 export interface Step {
@@ -12,88 +14,146 @@ export interface Step {
     distance: number;
     alert?: 'HAIRPIN' | 'STEEP_DECLINE' | 'BRAKE_WARNING' | 'ACCIDENT_PRONE' | 'MIST_ZONE';
     coordinate: [number, number];
+    landmark?: string;
+}
+
+interface Node {
+    id: string;
+    lat: number;
+    lng: number;
+}
+
+interface Edge {
+    from: string;
+    to: string;
+    distance: number;
+    weight: number;
+    hairpins: number;
+    steepness: number; // 1-5
+    isOneWay: boolean;
 }
 
 export class RoutingEngine {
-    private static BASE_SPEED = 20; // 20km/h average in hills
+    private static BASE_SPEED = 25; // km/h
 
-    static calculateRoute(start: [number, number], end: [number, number], options: RouteOptions) {
-        console.log("🛣️ RoutingEngine: Initializing hill-aware routing path...");
+    // Graph definition for Ooty Core
+    private static nodes: Node[] = [
+        ...OOTY_JUNCTIONS.map(j => ({ id: j.id, lat: j.lat, lng: j.lng })),
+        ...OOTY_SPOTS.map(s => ({ id: s.id, lat: s.latitude, lng: s.longitude }))
+    ];
 
-        // Basic step simulation with conditional logic
-        const isMisty = true; // should come from a weather service
-        const steps: Step[] = [
-            {
-                instruction: "Exit toward primary Ooty connector",
-                tamil_instruction: "முக்கிய ஊட்டி இணைப்புச் சாலையை நோக்கிச் செல்லவும்",
-                distance: 200,
-                coordinate: start
-            }
-        ];
+    private static edges: Edge[] = [
+        { from: 'finger-post', to: 'charring-cross', distance: 1.2, weight: 1, hairpins: 0, steepness: 1, isOneWay: true },
+        { from: 'charring-cross', to: 'chamundi-jn', distance: 0.8, weight: 1.2, hairpins: 0, steepness: 2, isOneWay: true },
+        { from: 'chamundi-jn', to: 'main-bus-stand', distance: 1.5, weight: 1, hairpins: 2, steepness: 3, isOneWay: true },
+        { from: 'main-bus-stand', to: 'ooty-boat-house', distance: 0.5, weight: 1, hairpins: 0, steepness: 1, isOneWay: false },
+        { from: 'charring-cross', to: 'botanical-garden', distance: 0.9, weight: 1, hairpins: 0, steepness: 2, isOneWay: false },
+        { from: 'chamundi-jn', to: 'rose-garden', distance: 0.4, weight: 1, hairpins: 0, steepness: 1, isOneWay: false },
+        { from: 'main-bus-stand', to: 'lovedale-jn', distance: 2.2, weight: 1.5, hairpins: 4, steepness: 4, isOneWay: false },
+        { from: 'charring-cross', to: 'doddabetta-peak', distance: 6.5, weight: 2.5, hairpins: 12, steepness: 5, isOneWay: false },
+        { from: 'finger-post', to: 'pykara-falls', distance: 18.0, weight: 1, hairpins: 8, steepness: 3, isOneWay: false }
+    ];
 
-        // Fog Warning
-        if (isMisty) {
-            steps.push({
-                instruction: "Fog warning: Visibility reduced to 20m. Turn on fog lights.",
-                tamil_instruction: "மூடுபனி எச்சரிக்கை: தெரிவுநிலை 20மீ ஆக குறைந்துள்ளது. பனி விளக்குகளை ஒளிரவிடவும்.",
-                distance: 0,
-                alert: 'MIST_ZONE',
-                coordinate: start
-            });
-        }
+    static calculateRoute(startLoc: [number, number], endLoc: [number, number], options: RouteOptions) {
+        // Find nearest nodes to start and end
+        const startNode = this.findNearestNode(startLoc);
+        const endNode = this.findNearestNode(endLoc);
 
-        // Logic for Ooty One-Way Loops
-        const nearCharringCross = getDistance(start[0], start[1], 11.4145, 76.7032) < 0.5;
-        if (nearCharringCross) {
-            steps.push({
-                instruction: "Follow Police One-Way Loop toward Commercial Road",
-                tamil_instruction: "கமர்ஷியல் சாலை நோக்கி ஒருவழிப் பாதையைப் பின்பற்றவும்",
-                distance: 600,
-                coordinate: [11.4145, 76.7032]
-            });
-        }
+        console.log(`🛣️ RoutingEngine: Pathfinding from ${startNode.id} to ${endNode.id}`);
 
-        // Standard Hill Hazards
+        // For this implementation, we will simulate the graph traversal to return steps
+        // In a production app, we'd use Dijkstra's algorithm here.
+
+        let path = this.getPath(startNode.id, endNode.id);
+
+        // Enhance path with hill-specific steps
+        const steps: Step[] = [];
+
+        // Initial instruction
         steps.push({
-            instruction: "Caution: Steep descent ahead. Maintain L2 gear.",
-            tamil_instruction: "எச்சரிக்கை: செங்குத்தான இறக்கம். L2 கியரைப் பயன்படுத்தவும்.",
-            distance: 800,
-            alert: 'STEEP_DECLINE',
-            coordinate: [11.4100, 76.7080]
-        });
-
-        steps.push({
-            instruction: "Hairpin Bend No. 1: Sound horn and watch for uphill traffic.",
-            tamil_instruction: "ஊசி வளைவு எண் 1: ஒலி எழுப்பி, மேலே வரும் வாகனங்களைக் கவனிக்கவும்.",
+            instruction: `Head toward ${startNode.id.replace(/-/g, ' ')}`,
+            tamil_instruction: `${startNode.id.replace(/-/g, ' ')} நோக்கிச் செல்லவும்`,
             distance: 100,
-            alert: 'HAIRPIN',
-            coordinate: [11.4050, 76.7120]
+            coordinate: startLoc
         });
+
+        let totalKm = 0;
+        let totalHairpins = 0;
+        let maxSteepness = 0;
+
+        path.forEach((edge, idx) => {
+            totalKm += edge.distance;
+            totalHairpins += edge.hairpins;
+            maxSteepness = Math.max(maxSteepness, edge.steepness);
+
+            const toNode = this.nodes.find(n => n.id === edge.to);
+
+            steps.push({
+                instruction: `Continue on ${edge.from.replace(/-/g, ' ')} to ${edge.to.replace(/-/g, ' ')}`,
+                tamil_instruction: `${edge.from.replace(/-/g, ' ')} வழியாக ${edge.to.replace(/-/g, ' ')} நோக்கி தொடரவும்`,
+                distance: edge.distance * 1000,
+                coordinate: [toNode!.lat, toNode!.lng],
+                landmark: edge.to.replace(/-/g, ' ')
+            });
+
+            if (edge.hairpins > 0) {
+                steps.push({
+                    instruction: `Warning: ${edge.hairpins} Hairpin bends ahead. Stay in your lane.`,
+                    tamil_instruction: `எச்சரிக்கை: ${edge.hairpins} கொண்டை ஊசி வளைவுகள் உள்ளன. உங்கள் பாதையிலேயே செல்லவும்.`,
+                    distance: 0,
+                    alert: 'HAIRPIN',
+                    coordinate: [toNode!.lat, toNode!.lng]
+                });
+            }
+
+            if (edge.steepness >= 4) {
+                steps.push({
+                    instruction: "Steep descent: Use engine braking. Do not stay on brakes.",
+                    tamil_instruction: "செங்குத்தான இறக்கம்: கியரை பயன்படுத்தி வேகத்தை குறைக்கவும். பிரேக்கை மட்டும் நம்ப வேண்டாம்.",
+                    distance: 0,
+                    alert: 'BRAKE_WARNING',
+                    coordinate: [toNode!.lat, toNode!.lng]
+                });
+            }
+        });
+
+        const eta = this.calculateETA(totalKm, options.isFoggy ? 80 : 40, options.isFoggy);
 
         return {
             steps,
-            totalDistance: 1.7,
-            estimatedTime: this.calculateETA(1.7, 85, isMisty ? 'MISTY' : 'SUNNY'),
-            fuelEfficiencyTip: "Use engine braking (Low Gear) to avoid brake fade in downhill sections."
+            totalDistance: totalKm,
+            estimatedTime: eta,
+            hairpins: totalHairpins,
+            difficulty: maxSteepness > 4 ? 'EXPERT' : maxSteepness > 2 ? 'MODERATE' : 'EASY',
+            safetyScore: options.isFoggy ? 65 : 95
         };
     }
 
-    private static calculateETA(km: number, density: number, weather: string) {
-        let baseMinutes = (km / this.BASE_SPEED) * 60;
+    private static findNearestNode(loc: [number, number]): Node {
+        return this.nodes.reduce((prev, curr) => {
+            const distPrev = getDistance(loc[0], loc[1], prev.lat, prev.lng);
+            const distCurr = getDistance(loc[0], loc[1], curr.lat, curr.lng);
+            return distCurr < distPrev ? curr : prev;
+        });
+    }
 
-        // Crowd impact
-        if (density > 80) baseMinutes *= 1.8;
-        else if (density > 50) baseMinutes *= 1.3;
+    private static getPath(startId: string, endId: string): Edge[] {
+        // Simple mock path for demo purposes
+        // In reality, this would be the output of a Dijkstra search
+        const pathEdges = this.edges.filter(e => e.from === startId || e.to === endId);
+        return pathEdges.length > 0 ? [pathEdges[0]] : [];
+    }
 
-        // Weather impact
-        if (weather === 'MISTY') baseMinutes *= 1.4;
-        if (weather === 'HEAVY_RAIN') baseMinutes *= 2.0;
+    private static calculateETA(km: number, density: number, isFoggy: boolean) {
+        let speed = this.BASE_SPEED;
+        if (isFoggy) speed *= 0.5;
+        if (density > 70) speed *= 0.4;
 
-        return Math.round(baseMinutes);
+        const mins = (km / speed) * 60;
+        return Math.max(5, Math.round(mins));
     }
 }
 
-// Simple distance helper for internal logic
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
     const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;

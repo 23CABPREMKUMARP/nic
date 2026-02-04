@@ -18,33 +18,33 @@ interface FilterPanelProps {
 
 export default function FilterPanel({ onFilterChange, activeFilters, onClose }: FilterPanelProps) {
     const categories = [
-        { id: 'Nature', icon: <Trees size={16} /> },
-        { id: 'View Points', icon: <Binoculars size={16} /> },
-        { id: 'Gardens', icon: <Flower2 size={16} /> },
-        { id: 'Lakes', icon: <Waves size={16} /> },
-        { id: 'Adventure', icon: <Zap size={16} /> },
-        { id: 'Religious', icon: <Heart size={16} /> },
-        { id: 'Heritage', icon: <Palmtree size={16} /> },
-        { id: 'Shopping', icon: <ShoppingBag size={16} /> },
-        { id: 'Food', icon: <UtensilsCrossed size={16} /> },
-        { id: 'Kids Friendly', icon: <Baby size={16} /> }
+        { id: 'Nature', label: 'Nature (இயற்கை)', icon: <Trees size={16} /> },
+        { id: 'View Points', label: 'View Points (காட்சி முனை)', icon: <Binoculars size={16} /> },
+        { id: 'Gardens', label: 'Gardens (பூங்காக்கள்)', icon: <Flower2 size={16} /> },
+        { id: 'Lakes', label: 'Lakes (ஏரிகள்)', icon: <Waves size={16} /> },
+        { id: 'Adventure', label: 'Adventure (சாகசம்)', icon: <Zap size={16} /> },
+        { id: 'Religious', label: 'Religious (ஆன்மீகம்)', icon: <Heart size={16} /> },
+        { id: 'Heritage', label: 'Heritage (பாரம்பரியம்)', icon: <Palmtree size={16} /> },
+        { id: 'Shopping', label: 'Shopping (ஷாப்பிங்)', icon: <ShoppingBag size={16} /> },
+        { id: 'Food', label: 'Food (உணவு)', icon: <UtensilsCrossed size={16} /> },
+        { id: 'Kids Friendly', label: 'Kids Friendly (குழந்தைகளுக்கு)', icon: <Baby size={16} /> }
     ];
 
     const timeFilters = [
-        { id: 'Morning spots', icon: <Sunrise size={16} /> },
-        { id: 'Sunset spots', icon: <Sun size={16} /> },
-        { id: 'Rain suitable', icon: <CloudRain size={16} /> },
-        { id: 'Mist view', icon: <Cloud size={16} /> },
-        { id: 'Night safe', icon: <Moon size={16} /> }
+        { id: 'Morning spots', label: 'Morning (காலை)', icon: <Sunrise size={16} /> },
+        { id: 'Sunset spots', label: 'Sunset (மாலை)', icon: <Sun size={16} /> },
+        { id: 'Rain suitable', label: 'Rain Mode (மழைக்கு உகந்தது)', icon: <CloudRain size={16} /> },
+        { id: 'Mist view', label: 'Mist View (மூடுபனி)', icon: <Cloud size={16} /> },
+        { id: 'Night safe', label: 'Night Safe (இரவு நேரம்)', icon: <Moon size={16} /> }
     ];
 
     const personalFilters = [
-        { id: 'Family', icon: <Users size={16} /> },
-        { id: 'Couples', icon: <HeartIcon size={16} /> },
-        { id: 'Students', icon: <GraduationCap size={16} /> },
-        { id: 'Senior citizens', icon: <UserRound size={16} /> },
-        { id: 'Wheelchair accessible', icon: <Accessibility size={16} /> },
-        { id: 'Budget friendly', icon: <Wallet size={16} /> }
+        { id: 'Family', label: 'Family (குடும்பம்)', icon: <Users size={16} /> },
+        { id: 'Couples', label: 'Couples (ஜோடிகள்)', icon: <HeartIcon size={16} /> },
+        { id: 'Students', label: 'Students (மாணவர்கள்)', icon: <GraduationCap size={16} /> },
+        { id: 'Senior citizens', label: 'Senior (முதியவர்கள்)', icon: <UserRound size={16} /> },
+        { id: 'Wheelchair accessible', label: 'Accessibility (சக்கர நாற்காலி)', icon: <Accessibility size={16} /> },
+        { id: 'Budget friendly', label: 'Budget (மலிவானது)', icon: <Wallet size={16} /> }
     ];
 
     const distanceFilters = [
@@ -63,8 +63,8 @@ export default function FilterPanel({ onFilterChange, activeFilters, onClose }: 
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onFilterChange(type, activeFilters[type] === item.id ? null : item.id)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-bold transition-all border-2 ${activeFilters[type] === item.id
-                                ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/30'
-                                : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-blue-200'
+                            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/30'
+                            : 'bg-slate-50 border-slate-100 text-slate-600 hover:border-blue-200'
                             }`}
                     >
                         {item.icon} {item.label || item.id}

@@ -34,7 +34,8 @@ export default function SmartNavigationHUD({ destination, userLocation, onClose 
         const calculated = RoutingEngine.calculateRoute(userLocation, [destination.latitude, destination.longitude], {
             avoidCrowds: true,
             hillOptimized: true,
-            localRoutes: false
+            vehicleType: 'CAR',
+            isFoggy: false // will be updated by parent state if needed
         });
         setRouteData(calculated);
 

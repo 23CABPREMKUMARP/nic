@@ -2,51 +2,47 @@
 export interface CrowdBrain {
     id: string;
     currentDensity: number;
-    predictedDensity30m: number;
+    predictedDensityNextHour: number;
     trend: 'RISING' | 'FALLING' | 'STABLE';
     recommendation: string;
     tamil_recommendation: string;
+    bestAlternativeId?: string;
 }
 
 export class CrowdPredictor {
-    /**
-     * Simulates predictive analysis using e-pass counts and historical patterns
-     */
     static async predict(spotId: string, currentData: any): Promise<CrowdBrain> {
-        const pastHourIncrease = currentData.factors?.passes || 0;
-        const parkingFull = currentData.factors?.parking > 90;
+        // Multi-weighted prediction algorithm
+        const hour = new Date().getHours();
+        const baseDensity = currentData.metrics?.density || 50;
 
-        let trend: 'RISING' | 'FALLING' | 'STABLE' = 'STABLE';
-        if (pastHourIncrease > 60) trend = 'RISING';
-        if (pastHourIncrease < 30) trend = 'FALLING';
+        // Time-based multipliers
+        let multiplier = 1.0;
+        if (hour >= 10 && hour <= 13) multiplier = 1.4; // Morning rush
+        if (hour >= 16 && hour <= 18) multiplier = 1.2; // Sunset rush
 
-        const predicted = trend === 'RISING' ? currentData.crowdScore + 15 : currentData.crowdScore - 5;
-
-        let recommendation = "Ideal time to visit.";
-        let tamil_rec = "வருகை தருவதற்கு ஏற்ற நேரம்.";
-
-        if (predicted > 85 || parkingFull) {
-            recommendation = "Crowd surge predicted. Suggest alternate spot.";
-            tamil_rec = "அதிக கூட்டம் எதிர்பார்க்கப்படுகிறது. மாற்று இடத்திற்கு செல்லவும்.";
-        } else if (predicted > 60) {
-            recommendation = "Moderate traffic. Expect 15m delay.";
-            tamil_rec = "மிதமான போக்குவரத்து. 15 நிமிடம் தாமதம் ஏற்படலாம்.";
-        }
+        const predicted = Math.min(100, baseDensity * multiplier);
+        const trend = predicted > baseDensity ? 'RISING' : predicted < baseDensity ? 'FALLING' : 'STABLE';
 
         return {
             id: spotId,
-            currentDensity: currentData.crowdScore,
-            predictedDensity30m: Math.min(100, predicted),
+            currentDensity: baseDensity,
+            predictedDensityNextHour: Math.round(predicted),
             trend,
-            recommendation,
-            tamil_recommendation: tamil_rec
+            recommendation: this.generateRecommendation(trend, predicted, spotId),
+            tamil_recommendation: this.generateTamilRecommendation(trend, predicted, spotId),
+            bestAlternativeId: predicted > 80 ? 'tea-factory' : undefined
         };
     }
 
-    static getBetterAlternate(spotId: string, allSpots: any[]) {
-        // Simple logic: return the closest spot with < 50% density
-        return allSpots
-            .filter(s => s.id !== spotId && s.crowdScore < 50)
-            .sort((a, b) => a.crowdScore - b.crowdScore)[0];
+    private static generateRecommendation(trend: string, density: number, id: string): string {
+        if (density > 85) return "Critical congestion! We suggest redirecting to the Tea Factory for a calm experience.";
+        if (trend === 'RISING' && density > 60) return "Crowd is growing fast. Arrive in the next 15 mins or pick another spot.";
+        return "Ideal time to visit. Great for clear photos.";
+    }
+
+    private static generateTamilRecommendation(trend: string, density: number, id: string): string {
+        if (density > 85) return "அதிக கூட்டம்! அமைதியான அனுபவத்திற்கு தேயிலை தொழிற்சாலைக்கு செல்லுமாறு பரிந்துரைக்கிறோம்.";
+        if (trend === 'RISING' && density > 60) return "கூட்டம் வேகமாக அதிகரித்து வருகிறது. அடுத்த 15 நிமிடங்களுக்குள் செல்லவும்.";
+        return "சரியான நேரம். புகைப்படங்கள் எடுக்க மிகச்சிறந்தது.";
     }
 }

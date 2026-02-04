@@ -15,6 +15,8 @@ import { RedirectLive } from "@/services/redirectLive";
 import SmartNavigationHUD from "@/components/navigation/SmartNavigationHUD";
 import FilterPanel from "./FilterPanel";
 import { CrowdService } from "@/services/navigation/crowdService";
+import { RoutingEngine } from "@/services/navigation/routingEngine";
+import { VoiceGuide } from "@/services/navigation/voiceGuide";
 
 // Fix Leaflet Icons
 const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
@@ -71,11 +73,12 @@ export default function LiveMapComponent() {
     const [activeLoop, setActiveLoop] = useState<string | null>(null);
     const [weatherCondition, setWeatherCondition] = useState<'misty' | 'sunny' | 'rainy'>('sunny');
     const [showFullNav, setShowFullNav] = useState(false);
+    const [travelPlan, setTravelPlan] = useState<any[]>([]);
+    const [showPlanner, setShowPlanner] = useState(false);
+    const [routeData, setRouteData] = useState<any>(null);
     const [localTime, setLocalTime] = useState(new Date());
     const [showAdvFilters, setShowAdvFilters] = useState(false);
     const [advFilters, setAdvFilters] = useState<any>({ category: null, time: null, personal: null, distance: null });
-    const [travelPlan, setTravelPlan] = useState<any[]>([]);
-    const [showPlanner, setShowPlanner] = useState(false);
 
     const { location: gps, error: gpsError } = useLiveLocation();
 
@@ -141,9 +144,27 @@ export default function LiveMapComponent() {
 
     const drawRoute = (lat: number, lng: number) => {
         if (!userLocation) return;
+
+        const destination = locations.attractions.find((a: any) => a.latitude === lat && a.longitude === lng) ||
+            locations.parking.find((p: any) => p.latitude === lat && p.longitude === lng);
+
+        const options = {
+            avoidCrowds: true,
+            hillOptimized: true,
+            vehicleType: 'CAR' as const,
+            isFoggy: weatherCondition === 'misty'
+        };
+
+        const calculatedRoute = RoutingEngine.calculateRoute(userLocation, [lat, lng], options);
+
         setIsNavigating(true);
         setShowFullNav(true);
-        setRoute([userLocation, [lat, lng]]);
+
+        // Extract coordinates from steps for polyline
+        const points: [number, number][] = [userLocation, ...calculatedRoute.steps.map(s => s.coordinate)];
+        setRoute(points);
+        setRouteData(calculatedRoute); // Store full details for HUD
+
         setMapCenter([lat, lng]);
         setMapZoom(16);
     };
@@ -158,6 +179,7 @@ export default function LiveMapComponent() {
         if (gps) {
             setMapCenter([gps.latitude, gps.longitude]);
             setMapZoom(17);
+            VoiceGuide.speak("Finding your position in the Nilgiris", "நீலகிரியில் உங்கள் இடத்தைக் கண்டறிகிறோம்");
         } else {
             alert("Searching for GPS signal...");
         }
@@ -451,8 +473,22 @@ export default function LiveMapComponent() {
             </AnimatePresence>
 
             {!selectedPlace && (
-                <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} onClick={locateMe} className="absolute bottom-12 right-6 z-[1001] bg-white p-6 rounded-full shadow-2xl border border-white/40"><Locate className="text-blue-600" size={32} /></motion.button>
+                <div className="absolute bottom-12 right-6 z-[1001] flex flex-col gap-4">
+                    <motion.button whileTap={{ scale: 0.8 }} onClick={() => VoiceGuide.speak("How can I help you?", "நான் உங்களுக்கு எப்படி உதவ முடியும்?")} className="bg-emerald-600 p-6 rounded-full shadow-2xl border border-white/20 text-white"><Mic size={32} /></motion.button>
+                    <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} onClick={locateMe} className="bg-white p-6 rounded-full shadow-2xl border border-white/40"><Locate className="text-blue-600" size={32} /></motion.button>
+                </div>
             )}
+
+            <AnimatePresence>
+                {weatherCondition === 'misty' && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[1010] pointer-events-none bg-blue-100/10 backdrop-blur-[2px] mix-blend-screen"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/30 animate-pulse duration-[10s]" />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

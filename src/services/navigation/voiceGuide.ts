@@ -7,6 +7,7 @@ export class VoiceGuide {
 
     static setLanguage(lang: Language) {
         this.currentLang = lang;
+        console.log(`🔊 VoiceGuide: Language set to ${lang}`);
     }
 
     static speak(text: string, tamilText?: string) {
@@ -16,34 +17,50 @@ export class VoiceGuide {
         const message = this.currentLang === 'ta' && tamilText ? tamilText : text;
         const utterance = new SpeechSynthesisUtterance(message);
 
-        // Try to find a Tamil voice if in Tamil mode
+        // Advanced Voice Selection
+        const voices = this.synth.getVoices();
         if (this.currentLang === 'ta') {
-            const voices = this.synth.getVoices();
-            const taVoice = voices.find(v => v.lang.includes('ta') || v.lang.includes('IN'));
-            if (taVoice) utterance.voice = taVoice;
+            // Priority: Regional Tamil -> Indian English Fallback
+            const taVoice = voices.find(v => v.lang.includes('ta-IN') || v.lang === 'ta-IN');
+            if (taVoice) {
+                utterance.voice = taVoice;
+            } else {
+                const hiVoice = voices.find(v => v.lang.includes('hi-IN') || v.lang.includes('en-IN'));
+                if (hiVoice) utterance.voice = hiVoice;
+            }
+        } else {
+            const enVoice = voices.find(v => v.lang === 'en-IN' || v.lang === 'en-GB');
+            if (enVoice) utterance.voice = enVoice;
         }
 
-        utterance.rate = 0.9; // Slightly slower for clarity in noisy traffic
+        utterance.rate = 0.85; // Slower for clarity in mountainous echo/car noise
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
         this.synth.speak(utterance);
     }
 
     static announceHillAlert(type: string) {
         const alerts: Record<string, { en: string, ta: string }> = {
             'HAIRPIN': {
-                en: "Sharp hairpin bend ahead. Slow down and sound your horn.",
-                ta: "முன்னால் கொண்டை ஊசி வளைவு உள்ளது. மெதுவாகச் சென்று ஒலி எழுப்பவும்."
+                en: "Attention: Sharp hairpin bend ahead. Use your horn and stay left.",
+                ta: "கவனம்: முன்னே கொண்டை ஊசி வளைவு உள்ளது. ஒலி எழுப்பி இடதுபுறமாகச் செல்லவும்."
             },
             'STEEP_DECLINE': {
-                en: "Steep decline. Use a lower gear to prevent brake heating.",
-                ta: "செங்குத்தான இறக்கம். பிரேக் சூடாவதைத் தவிர்க்க லோயர் கியரைப் பயன்படுத்தவும்."
+                en: "Steep decline detected. Shift to second gear to protect your brakes.",
+                ta: "அதிகமான இறக்கம். பிரேக்குகளைப் பாதுகாக்க இரண்டாவது கியருக்கு மாறவும்."
             },
             'BRAKE_WARNING': {
-                en: "Brake heating warning. Stop safely and let brakes cool if needed.",
-                ta: "பிரேக் சூடாக்கும் எச்சரிக்கை. தேவைப்பட்டால் பாதுகாப்பாக நிறுத்தி பிரேக்குகளை குளிர வைக்கவும்."
+                en: "Brake temperature rising. Please use engine braking immediately.",
+                ta: "பிரேக் சூடு அதிகமாகிறது. உடனயாக என்ஜின் பிரேக்கிங்கைப் பயன்படுத்தவும்."
             },
             'MIST_ZONE': {
-                en: "Foggy zone. Turn on your fog lights and reduce speed.",
-                ta: "மூடுபனி பகுதி. பனி விளக்குகளை ஒளிரவிட்டு வேகத்தை குறைக்கவும்."
+                en: "Heavy fog ahead. Visibility 10 meters. Fog lights recommended.",
+                ta: "கடும் மூடுபனி. பனி விளக்குகளைப் பயன்படுத்தவும்."
+            },
+            'ACCIDENT_PRONE': {
+                en: "High accident zone. Please drive with extreme caution.",
+                ta: "விபத்து அதிகம் நிகழும் பகுதி. மிகுந்த எச்சரிக்கையுடன் ஓட்டவும்."
             }
         };
 
@@ -51,5 +68,12 @@ export class VoiceGuide {
         if (alert) {
             this.speak(alert.en, alert.ta);
         }
+    }
+
+    static announceArrival(placeName: string) {
+        this.speak(
+            `You have arrived at ${placeName}. Please find authorized parking nearby.`,
+            `நீங்கள் ${placeName} இடத்திற்கு வந்துவிட்டீர்கள். அருகிலுள்ள அங்கீகரிக்கப்பட்ட வாகன நிறுத்துமிடத்தைப் பயன்படுத்தவும்.`
+        );
     }
 }
