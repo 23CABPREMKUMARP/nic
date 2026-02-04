@@ -353,7 +353,7 @@ export default function ScannerPage() {
                             )}
 
                             {/* Actions based on Status - Only if no warning */}
-                            {!scanResult.warning && scanResult.pass?.status === 'PENDING' && (
+                            {!scanResult.warning && (scanResult.pass?.status === 'PENDING' || scanResult.pass?.status === 'SUBMITTED') && (
                                 <Button
                                     onClick={handleActivate}
                                     disabled={actionLoading}

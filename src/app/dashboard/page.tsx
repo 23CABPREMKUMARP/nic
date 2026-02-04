@@ -21,7 +21,7 @@ export default async function Dashboard() {
     const activePasses = await prisma.pass.findMany({
         where: {
             userId: user.id,
-            status: { in: ['ACTIVE', 'USED', 'SUBMITTED'] }
+            status: { in: ['ACTIVE', 'USED', 'SUBMITTED', 'PENDING'] }
         },
         include: {
             parkingBookings: {

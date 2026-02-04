@@ -10,7 +10,7 @@ export async function GET() {
         const passes = await prisma.pass.findMany({
             where: {
                 userId: user.id,
-                status: { in: ['ACTIVE', 'USED'] }
+                status: { in: ['ACTIVE', 'USED', 'SUBMITTED', 'PENDING'] }
             },
             include: {
                 parkingBookings: {

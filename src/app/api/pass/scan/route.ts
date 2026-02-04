@@ -45,7 +45,6 @@ export async function POST(req: Request) {
         let warning: string | null = null;
         if (pass.status === 'USED') warning = "ALREADY ENTERED (USED)";
         else if (pass.status === 'CANCELLED') warning = "PASS CANCELLED";
-        else if (pass.status === 'SUBMITTED') warning = "PENDING VERIFICATION";
 
         const today = new Date();
         const visitDate = new Date(pass.visitDate);
