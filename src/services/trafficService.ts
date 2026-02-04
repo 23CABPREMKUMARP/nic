@@ -7,6 +7,7 @@ export interface TrafficInfo {
     bestTime: string;
     flowOpacity: number; // For map visualization
     closureReason?: 'NATURAL_DISASTER' | 'ACCIDENT' | 'ROAD_ISSUE' | null;
+    estimatedVehicles: number;
 }
 
 export class TrafficService {
@@ -28,7 +29,8 @@ export class TrafficService {
                 status: 'BLOCKED',
                 flowOpacity: 1,
                 bestTime: "Road is currently blocked",
-                closureReason: closureReason || 'ROAD_ISSUE'
+                closureReason: closureReason || 'ROAD_ISSUE',
+                estimatedVehicles: 0
             };
         }
 
@@ -85,7 +87,8 @@ export class TrafficService {
             delayMinutes: delay,
             status,
             flowOpacity: status === 'HEAVY' ? 0.9 : status === 'MODERATE' ? 0.6 : 0.3,
-            bestTime: this.suggestBestTime()
+            bestTime: this.suggestBestTime(),
+            estimatedVehicles: vehicleCount
         };
     }
 

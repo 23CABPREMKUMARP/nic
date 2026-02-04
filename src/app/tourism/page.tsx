@@ -4,11 +4,10 @@ import Navbar from "@/components/Navbar";
 import { useEffect, useState } from "react";
 import { getSmartRecommendations, getPredictionForNext3Hours, LiveSpotData } from "@/services/tourismService";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Users, Car, CloudRain, Star, ArrowRight, Video, Navigation, Clock } from "lucide-react";
+import { MapPin, Users, Car, CloudRain, Star, ArrowRight, Video, Navigation, Clock, Construction } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import LiveMap from "@/components/map/LiveMap";
 import { DashboardCardAnimator } from "@/components/DashboardAnimator";
 
 export default function TourismPage() {
@@ -42,18 +41,15 @@ export default function TourismPage() {
                     </p>
                 </div>
 
-                {/* Map Section */}
-                <section>
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 rounded-lg">
-                                <MapPin className="w-6 h-6 text-green-600" />
-                            </div>
-                            <h2 className="text-2xl font-bold text-gray-900">Live Exploration Map</h2>
-                        </div>
-                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Live Traffic Enabled</Badge>
+                {/* Map Section - Placeholder */}
+                <section className="bg-gradient-to-br from-gray-100 to-gray-50 rounded-[40px] p-12 text-center border border-gray-200">
+                    <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <Construction className="w-8 h-8 text-amber-500" />
                     </div>
-                    <LiveMap />
+                    <h2 className="text-2xl font-bold text-gray-700 mb-2">Enhanced Map Coming Soon</h2>
+                    <p className="text-gray-400 max-w-md mx-auto">
+                        New Mapbox-powered experience with improved navigation is under development.
+                    </p>
                 </section>
 
                 {/* Recommendations Header & Filters */}
