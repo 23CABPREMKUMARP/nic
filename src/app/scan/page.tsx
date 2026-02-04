@@ -19,37 +19,28 @@ export default function ScannerPage() {
     const startScanning = async () => {
         setCameraError(null);
         try {
-            // Get cameras
-            const devices = await Html5Qrcode.getCameras();
-            if (devices && devices.length) {
-                // Prefer back camera if available, else first one
-                const cameraId = devices[0].id;
-
-                if (!scannerRef.current) {
-                    scannerRef.current = new Html5Qrcode("reader");
-                }
-
-                await scannerRef.current.start(
-                    cameraId,
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 }
-                    },
-                    (decodedText) => {
-                        stopScanning();
-                        fetchPassDetails(decodedText);
-                    },
-                    (errorMessage) => {
-                        // ignore
-                    }
-                );
-                setIsScanning(true);
-            } else {
-                setCameraError("No cameras found. Please check device.");
+            if (!scannerRef.current) {
+                scannerRef.current = new Html5Qrcode("reader");
             }
+
+            await scannerRef.current.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText) => {
+                    stopScanning();
+                    fetchPassDetails(decodedText);
+                },
+                (errorMessage) => {
+                    // ignore
+                }
+            );
+            setIsScanning(true);
         } catch (err: any) {
             console.error("Camera start error:", err);
-            setCameraError(err?.message || "Camera access denied.");
+            setCameraError(err?.message || "Camera access denied. Please ensure you have granted camera permissions.");
         }
     };
 

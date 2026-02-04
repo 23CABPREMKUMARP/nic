@@ -13,14 +13,14 @@ export default function PassViewClient({ pass }: { pass: any }) {
     const [qrUrl, setQrUrl] = useState('');
 
     useEffect(() => {
-        QRCode.toDataURL(pass.qrCode)
+        QRCode.toDataURL(pass.qrCode || pass.id)
             .then(url => {
                 setQrUrl(url);
             })
             .catch(err => {
                 console.error(err);
             });
-    }, [pass.qrCode]);
+    }, [pass.qrCode, pass.id]);
 
     const handleSave = async () => {
         const element = document.getElementById('pass-capture-container');

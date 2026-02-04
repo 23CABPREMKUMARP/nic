@@ -13,23 +13,21 @@ const QrDisplay = ({ value, blur = false }: { value: string, blur?: boolean }) =
     const [qrUrl, setQrUrl] = useState('');
 
     useEffect(() => {
-        if (!blur) {
-            QRCode.toDataURL(value)
-                .then(url => setQrUrl(url))
-                .catch(err => console.error(err));
-        }
-    }, [value, blur]);
+        QRCode.toDataURL(value)
+            .then(url => setQrUrl(url))
+            .catch(err => console.error(err));
+    }, [value]);
 
     return (
         <div className="relative">
-            {qrUrl && !blur ? (
+            {qrUrl ? (
                 <img
                     src={qrUrl}
                     alt="QR Code"
-                    className="w-32 h-32 transition-all duration-500 blur-0 opacity-100"
+                    className={`w-32 h-32 transition-all duration-500 opacity-100 ${blur ? 'blur-sm opacity-60' : 'blur-0'}`}
                 />
             ) : (
-                <div className={`w-32 h-32 flex items-center justify-center bg-gray-50 border border-dashed rounded-lg ${blur ? 'blur-md opacity-50' : ''}`}>
+                <div className={`w-32 h-32 flex items-center justify-center bg-gray-50 border border-dashed rounded-lg`}>
                     <Loader2 className="w-8 h-8 text-yellow-600 animate-spin" />
                 </div>
             )}
@@ -147,7 +145,7 @@ export default function ActivePassDisplay({ initialPass }: { initialPass: any })
                         pass={pass}
                         statusOverride="PENDING VERIFICATION"
                         colorClass="bg-yellow-500"
-                        isBlurred={true}
+                        isBlurred={false}
                     />
                 </div>
 
@@ -177,7 +175,7 @@ const PassCardFace = ({ pass, statusOverride, colorClass, isBlurred, handleDownl
         <>
             <div className={`p-4 flex justify-between items-center ${colorClass} text-white`}>
                 <div className="flex items-center gap-2">
-                    {isBlurred ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
+                    {statusOverride.includes('PENDING') ? <Clock className="w-5 h-5 animate-pulse" /> : <CheckCircle className="w-5 h-5" />}
                     <span className="font-bold tracking-wide uppercase">{statusOverride}</span>
                 </div>
                 <span className="text-sm font-mono opacity-90">#{pass.id.slice(-6).toUpperCase()}</span>
