@@ -21,8 +21,38 @@ export async function createPass(userId: string, userEmail: string, userName: st
     let finalStatus = 'SUBMITTED'; // Default to submitted for admin review
 
     if (isHeavy) {
-        // In real app, we would look for an open HeavyVehicleSlot here
-        // For now, we auto-assign a mock or leave null
+        // Find or create a slot for this date (Auto-scheduler)
+        const visitDateObj = new Date(visitDate);
+        visitDateObj.setHours(0, 0, 0, 0);
+
+        let slot = await prisma.heavyVehicleSlot.findFirst({
+            where: { date: visitDateObj }
+        });
+
+        if (!slot) {
+            slot = await prisma.heavyVehicleSlot.create({
+                data: {
+                    date: visitDateObj,
+                    startTime: "22:00",
+                    endTime: "06:00",
+                    maxCapacity: 50,
+                    currentBooked: 0,
+                    status: "OPEN"
+                }
+            });
+        }
+
+        if (slot.currentBooked >= slot.maxCapacity) {
+            throw new Error("Heavy Vehicle Slots Full for this Date (Max 50)");
+        }
+
+        assignedSlotId = slot.id;
+
+        // Reserve slot
+        await prisma.heavyVehicleSlot.update({
+            where: { id: slot.id },
+            data: { currentBooked: { increment: 1 } }
+        });
     }
 
     // Upsert User

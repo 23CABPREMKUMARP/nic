@@ -1,14 +1,17 @@
 'use client';
 
 import Navbar from "@/components/Navbar";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { Ticket } from "lucide-react";
 
-export default function ParkingBookingPage() {
+function ParkingBookingContent() {
     const { user } = useUser();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const preselectName = searchParams.get('preselect');
 
     // State
     const [locations, setLocations] = useState<any[]>([]);
@@ -22,6 +25,10 @@ export default function ParkingBookingPage() {
     const [loading, setLoading] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState<any>(null);
 
+    // E-Pass Integration
+    const [activePasses, setActivePasses] = useState<any[]>([]);
+    const [selectedPassId, setSelectedPassId] = useState<string>("");
+
     useEffect(() => {
         // Set today's date
         const now = new Date();
@@ -33,10 +40,66 @@ export default function ParkingBookingPage() {
         fetch('/api/parking/locations')
             .then(res => res.json())
             .then(data => {
-                if (data.locations) setLocations(data.locations);
+                if (data.locations) {
+                    setLocations(data.locations);
+                    // Handle Pre-selection
+                    if (preselectName) {
+                        const found = data.locations.find((l: any) =>
+                            l.name.toLowerCase().includes(preselectName.toLowerCase())
+                        );
+                        if (found) setSelectedLocation(found.id);
+                    }
+                }
             })
             .catch(err => console.error(err));
-    }, []);
+
+        // Fetch Active Passes
+        if (user) {
+            fetch('/api/pass/active')
+                .then(async res => {
+                    const text = await res.text();
+                    try {
+                        return text ? JSON.parse(text) : {};
+                    } catch (e) {
+                        console.error("Invalid JSON from API:", text);
+                        return {};
+                    }
+                })
+                .then(data => {
+                    if (data.passes && data.passes.length > 0) {
+                        setActivePasses(data.passes);
+
+                        // AUTO-FILL: Automatically select the most recent pass
+                        const latestPass = data.passes[0];
+                        setSelectedPassId(latestPass.id);
+                        setVehicleNo(latestPass.vehicleNo);
+                        setVehicleType(latestPass.vehicleType);
+                        const visitDate = new Date(latestPass.visitDate).toISOString().split('T')[0];
+                        setDate(visitDate);
+                    }
+                })
+                .catch(err => console.error("Failed to load passes", err));
+        }
+    }, [user]);
+
+    const handlePassSelect = (passId: string) => {
+        setSelectedPassId(passId);
+        if (passId) {
+            const pass = activePasses.find(p => p.id === passId);
+            if (pass) {
+                setVehicleNo(pass.vehicleNo);
+                setVehicleType(pass.vehicleType);
+                const visitDate = new Date(pass.visitDate).toISOString().split('T')[0];
+                setDate(visitDate);
+            }
+        } else {
+            setVehicleNo("");
+            setVehicleType("CAR");
+            // Reset to today
+            const now = new Date();
+            setDate(now.toISOString().split('T')[0]);
+        }
+    };
 
     const getFacility = () => {
         if (!selectedLocation || !locations.length) return null;
@@ -65,7 +128,8 @@ export default function ParkingBookingPage() {
                     vehicleType,
                     startTime: start.toISOString(),
                     endTime: end.toISOString(),
-                    vehicleNo
+                    vehicleNo,
+                    passId: selectedPassId || undefined // Link booking to pass if selected
                 })
             });
             const data = await res.json();
@@ -130,6 +194,31 @@ export default function ParkingBookingPage() {
                     </div>
 
                     <div className="w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl text-gray-900 p-6 md:p-8 border border-white/20">
+                        {/* 0. E-Pass Auto-Fill */}
+                        {activePasses.length > 0 && (
+                            <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                                <label className="block text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                    <Ticket size={16} />
+                                    {selectedPassId ? "Vehicle Details Auto-Detected from E-Pass" : "Select Active E-Pass"}
+                                </label>
+                                <select
+                                    className="input-field border-blue-200 focus:border-blue-500 bg-white"
+                                    value={selectedPassId}
+                                    onChange={(e) => handlePassSelect(e.target.value)}
+                                >
+                                    <option value="">-- Manual Entry --</option>
+                                    {activePasses.map(pass => (
+                                        <option key={pass.id} value={pass.id}>
+                                            {pass.vehicleNo} ({pass.vehicleType}) - {new Date(pass.visitDate).toLocaleDateString()}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="text-xs text-blue-600 mt-2">
+                                    Selecting a pass automatically fills your vehicle details.
+                                </p>
+                            </div>
+                        )}
+
                         {/* 1. Location */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Select Attraction</label>
@@ -154,8 +243,8 @@ export default function ParkingBookingPage() {
                                         {["CAR", "BIKE", "BUS"].map(type => (
                                             <button
                                                 key={type}
-                                                onClick={() => setVehicleType(type)}
-                                                className={`px-4 py-2 rounded-lg border font-medium transition-all ${vehicleType === type ? 'bg-green-600 text-white border-green-600 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'}`}
+                                                onClick={() => !selectedPassId && setVehicleType(type)}
+                                                className={`px-4 py-2 rounded-lg border font-medium transition-all ${vehicleType === type ? 'bg-green-600 text-white border-green-600 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'} ${selectedPassId ? 'opacity-80 cursor-not-allowed' : ''}`}
                                             >
                                                 {type}
                                             </button>
@@ -170,8 +259,9 @@ export default function ParkingBookingPage() {
                                         <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
                                         <input
                                             type="date"
-                                            className="input-field"
+                                            className={`input-field ${selectedPassId ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
                                             value={date}
+                                            readOnly={!!selectedPassId}
                                             min={new Date().toLocaleDateString('fr-CA')}
                                             onChange={(e) => setDate(e.target.value)}
                                         />
@@ -210,10 +300,12 @@ export default function ParkingBookingPage() {
                                     <input
                                         type="text"
                                         placeholder="TN 43 ..."
-                                        className="input-field uppercase placeholder:normal-case"
+                                        className={`input-field uppercase placeholder:normal-case ${selectedPassId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                         value={vehicleNo}
+                                        readOnly={!!selectedPassId}
                                         onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
                                     />
+                                    {selectedPassId && <p className="text-xs text-green-600 mt-1">✓ Verified from E-Pass</p>}
                                 </div>
 
                                 {/* Summary */}
@@ -258,5 +350,13 @@ export default function ParkingBookingPage() {
                 }
             `}</style>
         </>
+    );
+}
+
+export default function ParkingBookingPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen pt-24 text-center text-white">Loading Booking System...</div>}>
+            <ParkingBookingContent />
+        </Suspense>
     );
 }

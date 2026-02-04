@@ -15,7 +15,7 @@ export interface TouristSpot {
 }
 
 export interface LiveSpotData extends TouristSpot {
-    crowdLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'EXTREME';
+    crowdLevel: 'SAFE' | 'MEDIUM' | 'OVERFLOW';
     crowdCount: number;
     parkingAvailable: boolean;
     parkingSlots: number;
@@ -24,13 +24,13 @@ export interface LiveSpotData extends TouristSpot {
     recommendationReason: string;
 }
 
-const STATIC_SPOTS: TouristSpot[] = [
+export const STATIC_SPOTS: TouristSpot[] = [
     {
         id: 'ooty-lake',
         name: 'Ooty Lake',
         description: 'Artificial lake built by John Sullivan in 1824. Famous for boating.',
         type: 'OUTDOOR',
-        image: 'https://images.unsplash.com/photo-1559827291-72ee739d0d9a?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1559827291-72ee739d0d9a?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4102,
         longitude: 76.6950,
         openTime: '09:00',
@@ -42,7 +42,7 @@ const STATIC_SPOTS: TouristSpot[] = [
         name: 'Botanical Garden',
         description: 'Sprawling gardens with exotic plants, ferns & a fossilized tree.',
         type: 'OUTDOOR',
-        image: 'https://images.unsplash.com/photo-1585827552668-d0728b355e3d?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1585827552668-d0728b355e3d?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4150,
         longitude: 76.7100,
         openTime: '07:00',
@@ -54,7 +54,7 @@ const STATIC_SPOTS: TouristSpot[] = [
         name: 'Doddabetta Peak',
         description: 'Highest peak in the Nilgiris offering panoramic views.',
         type: 'OUTDOOR',
-        image: 'https://images.unsplash.com/photo-1628163539524-ec4081c738c6?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1628163539524-ec4081c738c6?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4012,
         longitude: 76.7348,
         openTime: '07:00',
@@ -66,7 +66,7 @@ const STATIC_SPOTS: TouristSpot[] = [
         name: 'Tea Factory & Museum',
         description: 'Learn how tea is processed and taste fresh Nilgiri tea.',
         type: 'INDOOR',
-        image: 'https://images.unsplash.com/photo-1598263520111-e408ec077977?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1598263520111-e408ec077977?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4050,
         longitude: 76.7150,
         openTime: '09:00',
@@ -78,7 +78,7 @@ const STATIC_SPOTS: TouristSpot[] = [
         name: 'Government Rose Garden',
         description: 'Largest rose garden in India with thousands of varieties.',
         type: 'OUTDOOR',
-        image: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1518621736915-f3b1c41bfd00?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4000,
         longitude: 76.7100,
         openTime: '07:30',
@@ -89,7 +89,7 @@ const STATIC_SPOTS: TouristSpot[] = [
         name: 'Pykara Falls & Lake',
         description: 'Majestic waterfalls and a serene lake away from the town center.',
         type: 'OUTDOOR',
-        image: 'https://images.unsplash.com/photo-1546274527-9327167ef1f2?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1546274527-9327167ef1f2?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4500,
         longitude: 76.6000,
         openTime: '08:30',
@@ -100,7 +100,7 @@ const STATIC_SPOTS: TouristSpot[] = [
         name: 'Tribal Museum',
         description: 'Artifacts and history of the indigenous tribes of Nilgiris.',
         type: 'INDOOR',
-        image: 'https://images.unsplash.com/photo-1599905273752-965a9142858a?auto=format&fit=crop&q=80&w=1000',
+        image: 'https://images.unsplash.com/photo-1599905273752-965a9142858a?auto=format&fit=crop&q=80&w=600',
         latitude: 11.4200,
         longitude: 76.7000,
         openTime: '10:00',
@@ -128,10 +128,9 @@ export const getSmartRecommendations = async (): Promise<LiveSpotData[]> => {
         const capacity = 1000; // Simulated capacity
         const crowdPercentage = (crowdCount / capacity) * 100;
 
-        let crowdLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'EXTREME' = 'LOW';
-        if (crowdPercentage > 80) crowdLevel = 'EXTREME';
-        else if (crowdPercentage > 60) crowdLevel = 'HIGH';
-        else if (crowdPercentage > 30) crowdLevel = 'MODERATE';
+        let crowdLevel: 'SAFE' | 'MEDIUM' | 'OVERFLOW' = 'SAFE';
+        if (crowdPercentage > 80) crowdLevel = 'OVERFLOW';
+        else if (crowdPercentage > 50) crowdLevel = 'MEDIUM';
 
         const parkingSlots = Math.max(0, 100 - Math.floor(crowdCount / 10)); // Rough heuristic
         const parkingAvailable = parkingSlots > 10;
@@ -160,10 +159,10 @@ export const getSmartRecommendations = async (): Promise<LiveSpotData[]> => {
         }
 
         // Crowd Influence
-        if (crowdLevel === 'EXTREME') {
+        if (crowdLevel === 'OVERFLOW') {
             score -= 40;
             reasons.push("Overcrowded");
-        } else if (crowdLevel === 'HIGH') {
+        } else if (crowdLevel === 'MEDIUM') {
             score -= 20;
         } else {
             score += 20;
@@ -198,9 +197,9 @@ export const getPredictionForNext3Hours = () => {
         const hour = (currentHour + i + 1) % 24;
         const formattedHour = `${hour}:00`;
         // Simulating a trend where crowd peaks at 11am-2pm
-        let trend = 'LOW';
-        if (hour >= 11 && hour <= 14) trend = 'HIGH';
-        else if (hour >= 9 && hour <= 18) trend = 'MODERATE';
+        let trend = 'SAFE';
+        if (hour >= 11 && hour <= 14) trend = 'OVERFLOW';
+        else if (hour >= 9 && hour <= 18) trend = 'MEDIUM';
 
         return { time: formattedHour, crowdTrend: trend };
     });

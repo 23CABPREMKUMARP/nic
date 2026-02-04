@@ -1,0 +1,88 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Finger Post to Charring Cross",
+                "oneWay": true,
+                "direction": "EAST"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        76.685,
+                        11.412
+                    ],
+                    [
+                        76.7032,
+                        11.4145
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Charring Cross to Chamundi Jn",
+                "oneWay": true,
+                "direction": "SOUTH-EAST"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        76.7032,
+                        11.4145
+                    ],
+                    [
+                        76.712,
+                        11.4085
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Chamundi Jn to Bus Stand",
+                "oneWay": true,
+                "direction": "WEST"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        76.712,
+                        11.4085
+                    ],
+                    [
+                        76.696,
+                        11.405
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Bus Stand to Boat House",
+                "oneWay": false
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        76.696,
+                        11.405
+                    ],
+                    [
+                        76.691,
+                        11.405
+                    ]
+                ]
+            }
+        }
+    ]
+}

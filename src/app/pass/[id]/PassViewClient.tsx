@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Download, Share2, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
-import { toPng, toBlob } from 'html-to-image';
+import html2canvas from "html2canvas";
 
 export default function PassViewClient({ pass }: { pass: any }) {
     const [qrUrl, setQrUrl] = useState('');
@@ -26,13 +26,38 @@ export default function PassViewClient({ pass }: { pass: any }) {
         const element = document.getElementById('pass-capture-container');
         if (element) {
             try {
-                const dataUrl = await toPng(element, { cacheBust: true, pixelRatio: 2 });
-                const link = document.createElement('a');
-                link.href = dataUrl;
-                link.download = `Nilgiri-E-Pass-${pass.vehicleNo}.png`;
-                link.click();
+                // Wait for high-res assets to paint
+                await new Promise(r => setTimeout(r, 1000));
+
+                const canvas = await html2canvas(element, {
+                    scale: 3,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        const el = clonedDoc.getElementById('pass-capture-container');
+                        if (el) {
+                            el.style.position = 'static';
+                            el.style.left = '0';
+                            el.style.top = '0';
+                            el.style.visibility = 'visible';
+                            el.style.display = 'block';
+                        }
+                    }
+                });
+
+                const dataUrl = canvas.toDataURL('image/png');
+                if (dataUrl && dataUrl.length > 2000) {
+                    const link = document.createElement('a');
+                    link.href = dataUrl;
+                    link.download = `Nilgiri-E-Pass-${pass.vehicleNo}.png`;
+                    link.click();
+                } else {
+                    throw new Error("Generation failed");
+                }
             } catch (err) {
                 console.error("Save failed", err);
+                alert("Generation failed. Please try again.");
             }
         }
     };
@@ -41,7 +66,26 @@ export default function PassViewClient({ pass }: { pass: any }) {
         const element = document.getElementById('pass-capture-container');
         if (element) {
             try {
-                const blob = await toBlob(element, { cacheBust: true, pixelRatio: 2 });
+                await new Promise(r => setTimeout(r, 1000));
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        const el = clonedDoc.getElementById('pass-capture-container');
+                        if (el) {
+                            el.style.position = 'static';
+                            el.style.left = '0';
+                            el.style.top = '0';
+                            el.style.visibility = 'visible';
+                            el.style.display = 'block';
+                        }
+                    }
+                });
+
+                const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+
                 if (blob) {
                     const file = new File([blob], `pass-${pass.vehicleNo}.png`, { type: 'image/png' });
                     if (navigator.share) {
@@ -80,7 +124,7 @@ export default function PassViewClient({ pass }: { pass: any }) {
                         {/* QR Code */}
                         <div className="w-48 h-48 bg-gray-100 rounded-xl p-2 mb-6 shadow-inner">
                             {qrUrl ? (
-                                <img src={qrUrl} alt="QR Code" className="w-full h-full object-contain mix-blend-multiply" />
+                                <img src={qrUrl} alt="QR Code" className="w-full h-full object-contain" />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-400">Loading QR...</div>
                             )}
@@ -159,7 +203,10 @@ export default function PassViewClient({ pass }: { pass: any }) {
                 </motion.div>
 
                 {/* Hidden container for rendering the image to capture */}
-                <div id="pass-capture-container" className="fixed top-[-9999px] left-[-9999px] w-[400px]">
+                <div
+                    id="pass-capture-container"
+                    style={{ position: 'fixed', left: '-5000px', top: '0', width: '400px', zIndex: -1 }}
+                >
                     <div className="bg-white rounded-3xl overflow-hidden shadow-2xl relative">
                         <div className="bg-[#0f3b28] p-6 text-center relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-cover"></div>
@@ -168,7 +215,7 @@ export default function PassViewClient({ pass }: { pass: any }) {
                         </div>
 
                         <div className="p-8 flex flex-col items-center">
-                            {qrUrl && <img src={qrUrl} alt="QR Code" className="w-48 h-48 object-contain mix-blend-multiply mb-6" />}
+                            {qrUrl && <img src={qrUrl} alt="QR Code" className="w-48 h-48 object-contain mb-6" />}
 
                             <div className="text-center mb-6">
                                 <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">Vehicle Number</p>

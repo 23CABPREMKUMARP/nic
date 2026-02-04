@@ -3,7 +3,7 @@
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { BarChart, Users, Car, AlertTriangle, Bell, Settings, QrCode, PlusCircle, IndianRupee, CheckCircle2 } from "lucide-react";
+import { BarChart, Users, Car, AlertTriangle, Bell, Settings, QrCode, PlusCircle, IndianRupee, CheckCircle2, Navigation, Sparkles, MapPin, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart as RechartsBar, Bar, XAxis, Tooltip } from 'recharts';
 import { motion } from "framer-motion";
@@ -13,6 +13,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<any>(null);
     const [lockdown, setLockdown] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [settings, setSettings] = useState<any>({});
 
     useEffect(() => {
         fetchStats();
@@ -36,6 +37,7 @@ export default function AdminDashboard() {
                 return res.json();
             })
             .then(data => {
+                setSettings(data);
                 if (data.global_threshold) setCrowdThreshold(parseInt(data.global_threshold));
                 if (data.lockdown === 'true') setLockdown(true);
             })
@@ -172,7 +174,9 @@ export default function AdminDashboard() {
                         variants={itemVariants}
                         className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20"
                     >
-                        <h2 className="text-xl font-bold text-gray-900 mb-4">Crowd Density Control</h2>
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <Users className="text-blue-500" /> Crowd Density Control
+                        </h2>
                         <div className="space-y-6">
                             <div>
                                 <div className="flex justify-between text-sm text-gray-500 mb-2">
@@ -213,6 +217,63 @@ export default function AdminDashboard() {
                         </div>
                     </motion.div>
 
+                    {/* Map Engine Calibration */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20"
+                    >
+                        <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <Navigation className="text-indigo-500" /> Map Engine Calibration
+                        </h2>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase">Parking Weight</label>
+                                    <input
+                                        type="number" step="0.05"
+                                        defaultValue="0.40"
+                                        onBlur={(e) => updateSetting('WEIGHT_PARKING', e.target.value)}
+                                        className="w-full p-2 bg-gray-50 rounded-lg border text-sm font-bold"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase">Passes Weight</label>
+                                    <input
+                                        type="number" step="0.05"
+                                        defaultValue="0.35"
+                                        onBlur={(e) => updateSetting('WEIGHT_PASSES', e.target.value)}
+                                        className="w-full p-2 bg-gray-50 rounded-lg border text-sm font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                                <div>
+                                    <p className="font-bold text-indigo-900">Festival Mode</p>
+                                    <p className="text-xs text-indigo-600">Forces "High" density baseline</p>
+                                </div>
+                                <button
+                                    onClick={() => updateSetting('FESTIVAL_MODE', lockdown ? 'false' : 'true')} // Simulating toggle logic
+                                    className={`px-4 py-2 rounded-lg font-black text-xs transition-colors ${lockdown ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border border-indigo-200'}`}
+                                >
+                                    {lockdown ? 'ACTIVE' : 'INACTIVE'}
+                                </button>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-xs font-black text-gray-400 uppercase">Blocked Roads (CS-Names)</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Ooty Lake, Botanical Garden"
+                                    onBlur={(e) => updateSetting('BLOCKED_ROADS', e.target.value)}
+                                    className="w-full p-2 bg-gray-50 rounded-lg border text-sm font-bold"
+                                />
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                     {/* Live Analytics */}
                     <motion.div
                         variants={itemVariants}
@@ -231,6 +292,102 @@ export default function AdminDashboard() {
                                 </RechartsBar>
                             </ResponsiveContainer>
                         </div>
+                    </motion.div>
+
+                    {/* Manual Location Override & Emergency Closures */}
+                    <motion.div
+                        variants={itemVariants}
+                        className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20"
+                    >
+                        {/* Festival Mode & Smart Thresholds */}
+                        <motion.div variants={itemVariants} className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-8 border-4 border-amber-400">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                                        <Sparkles className="text-amber-500" /> Festival Mode
+                                    </h2>
+                                    <p className="text-xs font-bold text-gray-500">Enable during peak season events (Flower Show, etc.)</p>
+                                </div>
+                                <button
+                                    onClick={() => updateSetting('FESTIVAL_MODE', settings?.FESTIVAL_MODE === 'true' ? 'false' : 'true')}
+                                    className={`px-6 py-2 rounded-full font-black text-xs transition-all ${settings?.FESTIVAL_MODE === 'true' ? 'bg-amber-500 text-white shadow-lg' : 'bg-gray-100 text-gray-400'}`}
+                                >
+                                    {settings?.FESTIVAL_MODE === 'true' ? 'ACTIVE' : 'OFF'}
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-3">Redirect Sensitivity Weights</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {[
+                                            { key: 'WEIGHT_PARKING', label: 'Parking Space', icon: <MapPin size={12} /> },
+                                            { key: 'WEIGHT_PASSES', label: 'E-Pass Flow', icon: <Users size={12} /> },
+                                            { key: 'WEIGHT_HISTORY', label: 'Trends', icon: <Info size={12} /> },
+                                            { key: 'WEIGHT_WEATHER', label: 'Climate', icon: <Sparkles size={12} /> }
+                                        ].map(weight => (
+                                            <div key={weight.key} className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                                <div className="flex items-center gap-2 mb-2 text-gray-400">
+                                                    {weight.icon} <span className="text-[10px] font-black uppercase">{weight.label}</span>
+                                                </div>
+                                                <input
+                                                    type="range" min="0" max="1" step="0.1"
+                                                    defaultValue={settings?.[weight.key] || '0.25'}
+                                                    onChange={(e) => updateSetting(weight.key, e.target.value)}
+                                                    className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.div variants={itemVariants} className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20">
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <AlertTriangle className="text-amber-500" /> Manual Overrides & Closures
+                            </h2>
+                            <div className="space-y-4 overflow-y-auto max-h-[400px] pr-2 scrollbar-none">
+                                {['Ooty Lake', 'Botanical Garden', 'Doddabetta Peak', 'Rose Garden', 'Pykara Lake'].map(loc => (
+                                    <div key={loc} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col gap-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-black text-gray-900 uppercase tracking-tight">{loc}</span>
+                                            <div className="flex gap-1.5">
+                                                {['SAFE', 'MEDIUM', 'OVERFLOW'].map(lvl => (
+                                                    <button
+                                                        key={lvl}
+                                                        onClick={() => updateSetting(`CROWD_STATUS_${loc.toUpperCase().replace(/\s+/g, '_')}`, lvl)}
+                                                        className={`text-[8px] font-black px-2.5 py-1 rounded-full transition-all border ${lvl === 'SAFE' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-500 hover:text-white' : lvl === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-500 hover:text-white' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-500 hover:text-white'}`}
+                                                    >
+                                                        {lvl}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                                            <select
+                                                onChange={(e) => {
+                                                    if (e.target.value === 'OPEN') {
+                                                        updateSetting(`TRAFFIC_STATUS_${loc.toUpperCase().replace(/\s+/g, '_')}`, 'SMOOTH');
+                                                        updateSetting(`CLOSURE_REASON_${loc.toUpperCase().replace(/\s+/g, '_')}`, '');
+                                                    } else {
+                                                        updateSetting(`TRAFFIC_STATUS_${loc.toUpperCase().replace(/\s+/g, '_')}`, 'BLOCKED');
+                                                        updateSetting(`CLOSURE_REASON_${loc.toUpperCase().replace(/\s+/g, '_')}`, e.target.value);
+                                                    }
+                                                }}
+                                                className="text-[10px] font-black p-2 bg-white rounded-lg border flex-1"
+                                            >
+                                                <option value="OPEN">ROUTE OPEN</option>
+                                                <option value="NATURAL_DISASTER">CLOSE - NATURAL DISASTER</option>
+                                                <option value="ACCIDENT">CLOSE - ACCIDENT</option>
+                                                <option value="ROAD_ISSUE">CLOSE - ROAD ISSUE</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
                     </motion.div>
                 </div>
 

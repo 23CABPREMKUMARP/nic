@@ -9,21 +9,25 @@ export async function checkAdmin() {
         return null;
     }
 
-    // Auto-Sync & Promote to ADMIN for development/testing ease
+    // Sync user to DB (but don't auto-promote)
     const dbUser = await prisma.user.upsert({
         where: { id: user.id },
         update: {
             email: user.emailAddresses[0].emailAddress,
             name: `${user.firstName} ${user.lastName}`.trim(),
-            role: 'ADMIN'
+            // checking role separately, so we don't overwrite it here
         },
         create: {
             id: user.id,
             email: user.emailAddresses[0].emailAddress,
             name: `${user.firstName} ${user.lastName}`.trim(),
-            role: 'ADMIN'
+            role: 'USER' // Default to standard user
         }
     });
+
+    if (dbUser.role !== 'ADMIN') {
+        return null;
+    }
 
     return dbUser;
 }

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
 
         if (!pass) return NextResponse.json({ error: "Pass not found" }, { status: 404 });
 
-        if (pass.status !== 'PENDING') {
+        if (pass.status !== 'SUBMITTED') {
             return NextResponse.json({ error: `Cannot activate. Status is ${pass.status}` }, { status: 400 });
         }
 

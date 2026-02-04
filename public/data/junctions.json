@@ -1,0 +1,38 @@
+[
+    {
+        "id": "finger-post",
+        "name": "Finger Post",
+        "lat": 11.412,
+        "lng": 76.685
+    },
+    {
+        "id": "charring-cross",
+        "name": "Charring Cross",
+        "lat": 11.4145,
+        "lng": 76.7032
+    },
+    {
+        "id": "chamundi-jn",
+        "name": "Chamundi Junction",
+        "lat": 11.4085,
+        "lng": 76.712
+    },
+    {
+        "id": "main-bus-stand",
+        "name": "Main Bus Stand",
+        "lat": 11.405,
+        "lng": 76.696
+    },
+    {
+        "id": "lovedale-jn",
+        "name": "Lovedale Jn",
+        "lat": 11.397,
+        "lng": 76.715
+    },
+    {
+        "id": "chamundi-top",
+        "name": "Chamundi Hill Top",
+        "lat": 11.41,
+        "lng": 76.715
+    }
+]

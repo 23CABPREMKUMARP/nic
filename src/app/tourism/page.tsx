@@ -6,7 +6,9 @@ import { getSmartRecommendations, getPredictionForNext3Hours, LiveSpotData } fro
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Users, Car, CloudRain, Star, ArrowRight, Video, Navigation, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import LiveMap from "@/components/map/LiveMap";
 import { DashboardCardAnimator } from "@/components/DashboardAnimator";
 
 export default function TourismPage() {
@@ -23,127 +25,141 @@ export default function TourismPage() {
 
     const predictions = getPredictionForNext3Hours();
     const topPick = places.length > 0 ? places[0] : null;
-
     const filteredPlaces = places.filter(p => filter === 'ALL' || p.type === filter);
 
     return (
-        <>
+        <div className="bg-[#f8fafc] min-h-screen">
             <Navbar />
-            <div className="min-h-screen pt-24 pb-12 px-6 bg-[#f8fafc]">
-                <div className="max-w-7xl mx-auto space-y-8">
 
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-end border-b border-gray-200 pb-6 gap-4">
-                        <div>
-                            <h1 className="text-4xl font-bold text-gray-900">Smart Ooty Guide</h1>
-                            <p className="text-gray-500 mt-2">AI-driven recommendations based on live crowd, weather & traffic.</p>
+            <main className="container mx-auto px-4 py-24 space-y-12">
+                {/* Header Section */}
+                <div className="max-w-4xl">
+                    <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-4">
+                        Smart Ooty <span className="text-green-600">Guide</span>
+                    </h1>
+                    <p className="text-xl text-gray-500 leading-relaxed font-medium">
+                        Real-time AI insights for your Nilgiris exploration. We monitor crowds, weather, and parking so you don't have to.
+                    </p>
+                </div>
+
+                {/* Map Section */}
+                <section>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-green-100 rounded-lg">
+                                <MapPin className="w-6 h-6 text-green-600" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-900">Live Exploration Map</h2>
                         </div>
-                        <div className="flex gap-2">
-                            <Button
-                                variant={filter === 'ALL' ? 'primary' : 'outline'}
-                                onClick={() => setFilter('ALL')}
-                                className={filter === 'ALL' ? 'bg-green-600' : ''}
-                            >
-                                All Spots
-                            </Button>
-                            <Button
-                                variant={filter === 'OUTDOOR' ? 'primary' : 'outline'}
-                                onClick={() => setFilter('OUTDOOR')}
-                                className={filter === 'OUTDOOR' ? 'bg-green-600' : ''}
-                            >
-                                Outdoor
-                            </Button>
-                            <Button
-                                variant={filter === 'INDOOR' ? 'primary' : 'outline'}
-                                onClick={() => setFilter('INDOOR')}
-                                className={filter === 'INDOOR' ? 'bg-green-600' : ''}
-                            >
-                                Indoor
-                            </Button>
+                        <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Live Traffic Enabled</Badge>
+                    </div>
+                    <LiveMap />
+                </section>
+
+                {/* Recommendations Header & Filters */}
+                <section className="space-y-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-gray-200 pb-8">
+                        <div>
+                            <h2 className="text-3xl font-black text-gray-900">AI-Curated Picks</h2>
+                            <p className="text-gray-500 mt-2">Ranked by current conditions & visit potential.</p>
+                        </div>
+                        <div className="flex bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+                            {(['ALL', 'OUTDOOR', 'INDOOR'] as const).map((f) => (
+                                <button
+                                    key={f}
+                                    onClick={() => setFilter(f)}
+                                    className={`px-6 py-2 rounded-xl text-sm font-bold transition-all ${filter === f
+                                        ? 'bg-green-600 text-white shadow-lg shadow-green-200'
+                                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {f === 'ALL' ? 'All Spots' : f.charAt(0) + f.slice(1).toLowerCase()}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
                     {loading ? (
-                        <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>
+                        <div className="flex flex-col items-center justify-center py-24 space-y-4">
+                            <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-100 border-b-green-600"></div>
+                            <p className="text-gray-400 font-medium">Analyzing current Nilgiris conditions...</p>
+                        </div>
                     ) : (
-                        <>
-                            {/* Top Recommendation & Predictions */}
+                        <div className="space-y-12">
+                            {/* Hero Card & Stats Grid */}
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Hero Card: Top Pick */}
-                                {topPick && (
+                                {/* Top Pick Hero */}
+                                {topPick && filter === 'ALL' && (
                                     <motion.div
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        className="lg:col-span-2 relative h-[400px] rounded-3xl overflow-hidden group shadow-2xl"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="lg:col-span-2 relative h-[500px] rounded-[40px] overflow-hidden group shadow-2xl"
                                     >
-                                        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110" style={{ backgroundImage: `url(${topPick.image})` }} />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                                        <div className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110" style={{ backgroundImage: `url(${topPick.image})` }} />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-                                        <div className="absolute top-6 left-6 flex gap-2">
-                                            <span className="bg-yellow-400 text-black font-bold px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-lg">
-                                                <Star size={12} fill="currentColor" /> Top Recommendation
-                                            </span>
-                                            <span className="bg-white/20 backdrop-blur-md text-white font-bold px-3 py-1 rounded-full text-xs shadow-lg border border-white/20">
-                                                Visit Score: {Math.round(topPick.visitScore)}/100
-                                            </span>
+                                        <div className="absolute top-8 left-8 flex gap-3">
+                                            <div className="bg-yellow-400 text-black font-black px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-xl">
+                                                <Star size={14} fill="currentColor" /> Best Match Now
+                                            </div>
+                                            <div className="bg-white/10 backdrop-blur-xl text-white font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider border border-white/20">
+                                                Visit Score: {Math.round(topPick.visitScore)}
+                                            </div>
                                         </div>
 
-                                        <div className="absolute bottom-6 left-6 right-6">
-                                            <h2 className="text-4xl font-bold text-white mb-2">{topPick.name}</h2>
-                                            <p className="text-white/80 line-clamp-2 max-w-xl mb-6">{topPick.description}</p>
+                                        <div className="absolute bottom-10 left-10 right-10">
+                                            <h2 className="text-5xl font-black text-white mb-4 leading-tight">{topPick.name}</h2>
+                                            <p className="text-white/80 text-lg line-clamp-2 max-w-2xl mb-8 leading-relaxed font-medium">
+                                                {topPick.description}
+                                            </p>
 
-                                            <div className="flex flex-wrap gap-4 text-white/90 text-sm font-medium">
-                                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
-                                                    <Users size={16} className={topPick.crowdLevel === 'EXTREME' ? 'text-red-400' : 'text-green-400'} />
-                                                    {topPick.crowdLevel} Crowd
-                                                </div>
-                                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
-                                                    <Car size={16} className={topPick.parkingAvailable ? 'text-green-400' : 'text-red-400'} />
-                                                    {topPick.parkingAvailable ? `${topPick.parkingSlots} Slots` : 'Full'}
-                                                </div>
-                                                <div className="flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 backdrop-blur-sm">
-                                                    <Clock size={16} className="text-blue-400" />
-                                                    {topPick.openTime} - {topPick.closeTime}
-                                                </div>
+                                            <div className="flex flex-wrap gap-4">
+                                                <Metric icon={<Users size={18} />} label="Crowd" value={topPick.crowdLevel} color={topPick.crowdLevel === 'OVERFLOW' ? 'text-rose-400' : topPick.crowdLevel === 'MEDIUM' ? 'text-amber-400' : 'text-emerald-400'} />
+                                                <Metric icon={<Car size={18} />} label="Parking" value={topPick.parkingAvailable ? 'Available' : 'Full'} color={topPick.parkingAvailable ? 'text-emerald-400' : 'text-rose-400'} />
+                                                <Metric icon={<Clock size={18} />} label="Hours" value={`${topPick.openTime} - ${topPick.closeTime}`} color="text-blue-300" />
                                             </div>
                                         </div>
                                     </motion.div>
                                 )}
 
-                                {/* Right Side: Virtual Tour & Prediction */}
-                                <div className="space-y-6 flex flex-col">
+                                {/* Side Content: Virtual & Prediction */}
+                                <div className="space-y-8 flex flex-col h-full">
                                     {/* Virtual Tour Promo */}
-                                    <motion.div
-                                        whileHover={{ y: -5 }}
-                                        className="bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl flex-1 flex flex-col justify-center"
-                                    >
-                                        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-3xl opacity-20 -mr-16 -mt-16"></div>
-                                        <Video className="w-12 h-12 mb-4 text-indigo-300" />
-                                        <h3 className="text-2xl font-bold mb-2">Virtual Tour</h3>
-                                        <p className="text-indigo-200 mb-6 text-sm">Experience the Nilgiris from home. Immersive 3D views of Ooty's best spots.</p>
-                                        <Link href="/virtual-tour">
-                                            <Button className="w-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold group">
-                                                Start Tour <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                                            </Button>
-                                        </Link>
-                                    </motion.div>
+                                    <div className="bg-indigo-950 rounded-[40px] p-8 text-white relative overflow-hidden shadow-2xl flex-1 flex flex-col justify-center border border-indigo-900">
+                                        <div className="absolute -top-20 -right-20 w-80 h-80 bg-indigo-500 rounded-full blur-[100px] opacity-20"></div>
+                                        <div className="relative z-10">
+                                            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 backdrop-blur">
+                                                <Video className="w-8 h-8 text-indigo-300" />
+                                            </div>
+                                            <h3 className="text-3xl font-black mb-4 tracking-tight">Virtual Experience</h3>
+                                            <p className="text-indigo-200/80 mb-8 text-lg font-medium leading-relaxed">
+                                                Preview Ooty's hotspots in stunning 360° before you arrive.
+                                            </p>
+                                            <Link href="/virtual-tour">
+                                                <Button className="w-full bg-white text-indigo-950 hover:bg-indigo-50 font-black rounded-2xl h-14">
+                                                    Start VR Tour <ArrowRight size={20} className="ml-2" />
+                                                </Button>
+                                            </Link>
+                                        </div>
+                                    </div>
 
                                     {/* Crowd Predictor */}
-                                    <div className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
-                                        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                            <Users size={18} className="text-purple-500" /> Crowd Prediction
+                                    <div className="bg-white rounded-[40px] p-8 shadow-xl border border-gray-100/50">
+                                        <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
+                                            <Clock className="text-purple-500 w-6 h-6" /> Hourly Forecast
                                         </h3>
-                                        <div className="space-y-4">
+                                        <div className="space-y-6">
                                             {predictions.map((p, i) => (
-                                                <div key={i} className="flex items-center gap-4">
-                                                    <span className="text-sm font-mono text-gray-500">{p.time}</span>
-                                                    <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full ${p.crowdTrend === 'HIGH' ? 'bg-red-500' : p.crowdTrend === 'MODERATE' ? 'bg-yellow-500' : 'bg-green-500'}`}
-                                                            style={{ width: p.crowdTrend === 'HIGH' ? '80%' : p.crowdTrend === 'MODERATE' ? '50%' : '20%' }}
-                                                        ></div>
+                                                <div key={i} className="flex items-center gap-4 group">
+                                                    <span className="text-sm font-black text-gray-400 w-12">{p.time}</span>
+                                                    <div className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: p.crowdTrend === 'OVERFLOW' ? '95%' : p.crowdTrend === 'MEDIUM' ? '60%' : '30%' }}
+                                                            className={`h-full rounded-full ${p.crowdTrend === 'OVERFLOW' ? 'bg-rose-500' : p.crowdTrend === 'MEDIUM' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                                        />
                                                     </div>
-                                                    <span className="text-xs font-bold text-gray-700">{p.crowdTrend}</span>
+                                                    <span className="text-[10px] font-black text-gray-600 uppercase w-16 text-right whitespace-nowrap">{p.crowdTrend}</span>
                                                 </div>
                                             ))}
                                         </div>
@@ -152,44 +168,47 @@ export default function TourismPage() {
                             </div>
 
                             {/* Explore Spots Grid */}
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                    <Navigation className="text-green-600" /> Explore Recommendations
+                            <div className="space-y-8">
+                                <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
+                                    <Navigation className="text-green-600 w-6 h-6" />
+                                    {filter === 'ALL' ? 'More Recommendations' : `${filter.charAt(0) + filter.slice(1).toLowerCase()} Spots`}
                                 </h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                     <AnimatePresence>
-                                        {filteredPlaces.map((place, index) => (
-                                            <DashboardCardAnimator key={place.id} delay={index * 0.1}>
-                                                <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-all group h-full flex flex-col">
-                                                    <div className="h-48 bg-cover bg-center relative" style={{ backgroundImage: `url(${place.image})` }}>
-                                                        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-xs font-bold shadow-sm">
-                                                            {place.visitScore}/100 Score
+                                        {filteredPlaces.slice(filter === 'ALL' ? 1 : 0).map((place, index) => (
+                                            <DashboardCardAnimator key={place.id} delay={index * 0.05}>
+                                                <div className="bg-white rounded-[32px] overflow-hidden shadow-lg border border-gray-100 hover:shadow-2xl transition-all duration-300 group h-full flex flex-col">
+                                                    <div className="h-56 bg-cover bg-center relative" style={{ backgroundImage: `url(${place.image})` }}>
+                                                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
+                                                        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur px-3 py-1 rounded-xl text-xs font-black shadow-lg">
+                                                            {Math.round(place.visitScore)} SCORE
                                                         </div>
-                                                        {place.type === 'INDOOR' && (
-                                                            <div className="absolute top-3 left-3 bg-blue-100 text-blue-700 px-2 py-1 rounded-lg text-xs font-bold shadow-sm border border-blue-200">
-                                                                Indoor
+                                                        <div className="absolute bottom-4 left-4 flex gap-2">
+                                                            <div className="bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-[10px] font-black uppercase text-gray-600">
+                                                                {place.type}
                                                             </div>
-                                                        )}
+                                                            <div className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${place.crowdLevel === 'SAFE' ? 'bg-emerald-500 text-white' : place.crowdLevel === 'OVERFLOW' ? 'bg-rose-500 text-white' : 'bg-amber-100 text-amber-700 font-bold'
+                                                                }`}>
+                                                                {place.crowdLevel} Crowd
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div className="p-5 flex-1 flex flex-col">
-                                                        <div className="flex justify-between items-start mb-2">
-                                                            <h3 className="font-bold text-lg text-gray-900 group-hover:text-green-700 transition-colors">{place.name}</h3>
-                                                        </div>
-                                                        <p className="text-sm text-gray-500 mb-4 line-clamp-2">{place.description}</p>
+                                                    <div className="p-6 flex-1 flex flex-col">
+                                                        <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-green-600 transition-colors">{place.name}</h3>
+                                                        <p className="text-gray-500 text-sm mb-6 line-clamp-2 leading-relaxed font-medium">
+                                                            {place.description}
+                                                        </p>
 
-                                                        <div className="grid grid-cols-2 gap-2 mb-4 text-xs font-medium text-gray-600">
-                                                            <div className="flex items-center gap-1.5 bg-gray-50 p-1.5 rounded">
-                                                                <Users size={14} /> {place.crowdLevel}
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5 bg-gray-50 p-1.5 rounded">
-                                                                <Car size={14} /> {place.parkingAvailable ? 'Parking OK' : 'No Parking'}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                                                            <span className="text-green-600 text-xs font-bold uppercase tracking-wider">{place.recommendationReason}</span>
+                                                        <div className="mt-auto flex items-center justify-between gap-4">
+                                                            <Link href={`/parking?preselect=${encodeURIComponent(place.name)}`} className="flex-1">
+                                                                <Button className="w-full bg-gray-900 hover:bg-black text-white font-bold h-11 rounded-xl shadow-md">
+                                                                    Book Parking
+                                                                </Button>
+                                                            </Link>
                                                             <Link href={place.virtualTourUrl || '#'}>
-                                                                <Button variant="ghost" className="h-8 text-xs hover:bg-green-50 hover:text-green-700">Details</Button>
+                                                                <button className="p-3 bg-gray-50 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-colors">
+                                                                    <Video size={18} />
+                                                                </button>
                                                             </Link>
                                                         </div>
                                                     </div>
@@ -199,10 +218,22 @@ export default function TourismPage() {
                                     </AnimatePresence>
                                 </div>
                             </div>
-                        </>
+                        </div>
                     )}
-                </div>
+                </section>
+            </main>
+        </div>
+    );
+}
+
+function Metric({ icon, label, value, color }: { icon: React.ReactNode, label: string, value: string, color: string }) {
+    return (
+        <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-2xl border border-white/10 backdrop-blur-md">
+            <div className={color}>{icon}</div>
+            <div className="flex flex-col">
+                <span className="text-[10px] text-white/50 font-bold uppercase tracking-wider">{label}</span>
+                <span className={`text-sm font-black ${color}`}>{value}</span>
             </div>
-        </>
+        </div>
     );
 }

@@ -1,8 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { checkAdmin, unauthorized } from "@/lib/auth-check";
 
 export async function POST(req: Request) {
     try {
+        const admin = await checkAdmin();
+        if (!admin) return unauthorized();
+
         const { passId } = await req.json();
 
         const pass = await prisma.pass.findUnique({ where: { id: passId } });

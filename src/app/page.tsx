@@ -18,24 +18,34 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center pt-20 px-6 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center z-10 space-y-8">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-            className="text-5xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-green-500 via-black to-green-500 drop-shadow-2xl pb-1"
+            className="inline-block relative"
           >
-            Explore Nilgiris Responsibly
-          </motion.h1>
+            {/* Stronger dark backdrop for contrast */}
+            <div className="absolute -inset-8 bg-black/60 blur-3xl rounded-full" />
 
-          <motion.p
+            <h1 className="relative text-6xl md:text-8xl font-black text-white tracking-tight leading-tight drop-shadow-2xl">
+              Explore Nilgiris <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-400 to-yellow-300 animate-gradient-x py-2 block">
+                Responsibly
+              </span>
+            </h1>
+          </motion.div>
+
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.8 }}
-            className="text-xl text-black max-w-2xl mx-auto font-medium drop-shadow-md"
+            className="inline-block relative px-6 py-2 rounded-2xl bg-black/30 backdrop-blur-sm border border-white/10"
           >
-            Smart E-Pass System with Real-time Parking & Crowd Analytics.
-            Protecting nature while ensuring a seamless graphical experience.
-          </motion.p>
+            <p className="text-xl md:text-2xl text-white font-medium drop-shadow-md max-w-2xl mx-auto">
+              Smart E-Pass System with Real-time Parking & Crowd Analytics.
+              Protecting nature while ensuring a seamless graphical experience.
+            </p>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -49,8 +59,8 @@ export default function Home() {
               </Button>
             </Link>
             <Link href="/map">
-              <Button variant="glass" className="text-lg px-8 py-6 rounded-2xl text-black font-semibold">
-                Live Map Status
+              <Button variant="secondary" className="text-lg px-8 py-6 rounded-2xl text-emerald-900 border border-emerald-100 shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)]">
+                <MapPin className="w-5 h-5" /> Live Map Status
               </Button>
             </Link>
           </motion.div>
@@ -76,22 +86,22 @@ export default function Home() {
           className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
           <FeatureCard
-            icon={<QrCode className="w-8 h-8 text-green-400" />}
+            icon={<QrCode className="w-8 h-8 text-white" />}
             title="Instant QR Pass"
             desc="Generate entry passes instantly. Contactless verification at all checkpoints."
           />
           <FeatureCard
-            icon={<Car className="w-8 h-8 text-blue-400" />}
+            icon={<Car className="w-8 h-8 text-white" />}
             title="Smart Parking"
             desc="Check real-time slot availability before you reach the destination."
           />
           <FeatureCard
-            icon={<ShieldCheck className="w-8 h-8 text-yellow-400" />}
+            icon={<ShieldCheck className="w-8 h-8 text-white" />}
             title="Crowd Control"
             desc="AI-driven crowd density monitoring to suggest less crowded spots."
           />
           <FeatureCard
-            icon={<MapPin className="w-8 h-8 text-red-400" />}
+            icon={<MapPin className="w-8 h-8 text-white" />}
             title="GPS Navigation"
             desc="Offline-ready maps guiding you to verified tourist spots safely."
           />
@@ -114,13 +124,13 @@ function FeatureCard({ icon, title, desc }: { icon: any, title: string, desc: st
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
       }}
       whileHover={{ y: -10, scale: 1.02 }}
-      className="p-8 flex flex-col gap-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:border-green-500/30 shadow-lg transition-all"
+      className="p-8 flex flex-col gap-4 bg-black/40 backdrop-blur-xl rounded-xl border border-white/10 hover:border-emerald-500/50 shadow-2xl transition-all group"
     >
-      <div className="bg-green-50 w-14 h-14 rounded-full flex items-center justify-center border border-green-100 shadow-sm">
+      <div className="bg-emerald-500/20 w-14 h-14 rounded-full flex items-center justify-center border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-      <p className="text-gray-700 leading-relaxed font-medium">{desc}</p>
+      <h3 className="text-xl font-bold text-white tracking-wide">{title}</h3>
+      <p className="text-gray-300 leading-relaxed font-medium">{desc}</p>
     </motion.div>
   )
 }

@@ -1,17 +1,35 @@
 'use client';
 
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [lang, setLang] = useState<'EN' | 'TA'>('EN');
 
+    const { user } = useUser();
+    const [isAdmin, setIsAdmin] = useState(false);
+
     const toggleLang = () => setLang(l => l === 'EN' ? 'TA' : 'EN');
+
+    useEffect(() => {
+        if (!user) {
+            setIsAdmin(false);
+            return;
+        }
+
+        fetch('/api/user/role')
+            .then(res => res.json())
+            .then(data => {
+                if (data.role === 'ADMIN') setIsAdmin(true);
+                else setIsAdmin(false);
+            })
+            .catch(err => console.error(err));
+    }, [user]);
 
     return (
         <nav className="fixed top-0 left-0 w-full z-50 glass border-b border-white/10 px-6 py-4">
@@ -42,6 +60,13 @@ export default function Navbar() {
                             {lang === 'EN' ? 'Tourism' : 'சுற்றுலா'}
                         </motion.div>
                     </Link>
+                    {isAdmin && (
+                        <Link href="/admin">
+                            <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-red-400 hover:text-red-300 font-bold transition-colors cursor-pointer border border-red-500/30 px-2 py-1 rounded bg-red-500/10">
+                                {lang === 'EN' ? 'ADMIN PANEL' : 'நிர்வாகம்'}
+                            </motion.div>
+                        </Link>
+                    )}
                     <Link href="/map">
                         <motion.div whileHover={{ scale: 1.1, textShadow: "0px 0px 8px rgb(255,255,255)" }} className="text-white/80 hover:text-white transition-colors cursor-pointer">
                             {lang === 'EN' ? 'Smart Map' : 'வரைபடம்'}
@@ -96,6 +121,7 @@ export default function Navbar() {
                             <Link href="/dashboard" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Dashboard</Link>
                             <Link href="/parking" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Parking</Link>
                             <Link href="/tourism" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Tourism</Link>
+                            {isAdmin && <Link href="/admin" className="block text-red-400 font-bold py-2 hover:bg-red-500/10 rounded px-2">ADMIN PANEL</Link>}
                             <Link href="/map" className="block text-white/90 py-2 hover:bg-white/5 rounded px-2">Smart Map</Link>
                             <div className="pt-2 border-t border-white/10 mt-2">
                                 <SignedOut>

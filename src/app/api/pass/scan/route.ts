@@ -16,6 +16,7 @@ export async function POST(req: Request) {
 
         if (!pass) {
             // Check for Parking Booking
+            // ... (existing parking logic) ...
             const parking = await prisma.parkingBooking.findUnique({
                 where: { qrCode },
                 include: { user: true, facility: { include: { location: true } } }
@@ -26,6 +27,7 @@ export async function POST(req: Request) {
                 if (parking.status === 'CANCELLED') parkingWarning = "BOOKING CANCELLED";
                 if (parking.status === 'NO_SHOW') parkingWarning = "NO SHOW - REFUNDED";
                 if (parking.status === 'ARRIVED') parkingWarning = "ALREADY ARRIVED";
+                if (parking.status === 'COMPLETED') parkingWarning = "ALREADY EXITED";
 
                 return NextResponse.json({
                     type: "PARKING",
@@ -39,20 +41,26 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Invalid Pass or Booking" }, { status: 404 });
         }
 
+        // Pass Status Checks
+        let warning: string | null = null;
+        if (pass.status === 'USED') warning = "ALREADY ENTERED (USED)";
+        else if (pass.status === 'CANCELLED') warning = "PASS CANCELLED";
+        else if (pass.status === 'SUBMITTED') warning = "PENDING VERIFICATION";
+
         const today = new Date();
         const visitDate = new Date(pass.visitDate);
         const isToday = visitDate.toDateString() === today.toDateString();
         const isPast = visitDate < new Date(today.setHours(0, 0, 0, 0));
 
-        // Return computed details
-        let warning = null;
-        if (isPast) warning = "EXPIRED (Past Date)";
-        else if (!isToday) warning = "INVALID DATE (Future)";
+        if (!warning) {
+            if (isPast) warning = "EXPIRED (Past Date)";
+            else if (!isToday) warning = "INVALID DATE (Future)";
+        }
 
         return NextResponse.json({
             pass,
             warning,
-            validForToday: isToday && !isPast
+            validForToday: isToday && !isPast && !warning
         });
 
     } catch (error) {

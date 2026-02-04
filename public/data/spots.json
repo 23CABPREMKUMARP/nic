@@ -1,0 +1,57 @@
+[
+    {
+        "id": "botanical-garden",
+        "name": "Botanical Garden",
+        "tamil_name": "தாவரவியல் பூங்கா",
+        "latitude": 11.419,
+        "longitude": 76.7145,
+        "type": "ATTRACTION",
+        "image": "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae",
+        "description": "55-hectare garden established in 1848.",
+        "bestTime": "9:00 AM - 11:30 AM"
+    },
+    {
+        "id": "rose-garden",
+        "name": "Rose Garden",
+        "tamil_name": "ரோஜா பூங்கா",
+        "latitude": 11.408,
+        "longitude": 76.71,
+        "type": "ATTRACTION",
+        "image": "https://images.unsplash.com/photo-1496062031456-07b8f1620322",
+        "description": "20,000 varieties of roses.",
+        "bestTime": "4:00 PM - 6:00 PM"
+    },
+    {
+        "id": "ooty-boat-house",
+        "name": "Ooty Boat House",
+        "tamil_name": "ஊட்டி படகு இல்லம்",
+        "latitude": 11.405,
+        "longitude": 76.691,
+        "type": "ATTRACTION",
+        "image": "https://images.unsplash.com/photo-1562916194-686bd29111c1",
+        "description": "Artificial Ooty Lake boating.",
+        "bestTime": "10:00 AM - 4:00 PM"
+    },
+    {
+        "id": "doddabetta-peak",
+        "name": "Doddabetta Peak",
+        "tamil_name": "தொட்டபெட்டா சிகரம்",
+        "latitude": 11.398,
+        "longitude": 76.735,
+        "type": "ATTRACTION",
+        "image": "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4",
+        "description": "Highest point in Nilgiris.",
+        "bestTime": "6:30 AM - 8:30 AM"
+    },
+    {
+        "id": "finger-post-view",
+        "name": "Finger Post View",
+        "tamil_name": "பிங்கர் போஸ்ட்",
+        "latitude": 11.412,
+        "longitude": 76.685,
+        "type": "ATTRACTION",
+        "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+        "description": "Historic landmark and view.",
+        "bestTime": "7:00 AM"
+    }
+]

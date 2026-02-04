@@ -40,8 +40,23 @@ export async function POST(req: Request) {
 
         const amount = durationHours * facility.hourlyRate;
 
-        // 3. Create Booking
-        // In a real app, we'd check availability here (count overlapping bookings)
+        // 3. Check Availability
+        const activeBookings = await prisma.parkingBooking.count({
+            where: {
+                facilityId: facility.id,
+                status: { in: ['BOOKED', 'ARRIVED'] },
+                // Check if ACTIVE interval overlaps with REQUESTED interval
+                // (StartA < EndB) and (EndA > StartB)
+                startTime: { lt: end },
+                endTime: { gt: start }
+            }
+        });
+
+        if (activeBookings >= facility.totalSlots) {
+            return NextResponse.json({ error: "Parking Full for this time slot" }, { status: 409 });
+        }
+
+        // 4. Create Booking
 
         const booking = await prisma.parkingBooking.create({
             data: {
