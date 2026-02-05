@@ -1,7 +1,9 @@
 
+import { prisma } from '@/lib/prisma';
+
 /**
  * Offline Ticket Service
- * Manages manual entry of tickets for walk-ins, government passes, emergency vehicles
+ * Manages database entry of tickets for walk-ins, government passes, emergency vehicles
  */
 
 export interface OfflineTicket {
@@ -9,83 +11,168 @@ export interface OfflineTicket {
     timestamp: Date;
     vehicleNo: string;
     name: string;
-    mobile?: string;
+    mobile?: string | null;
     members: number;
-    vehicleType: 'CAR' | 'BUS' | 'BIKE' | 'EMERGENCY';
+    vehicleType: string;
     spotId: string;
-    parkingSlotId?: string;
-    type: 'OFFLINE_PAID' | 'GOVT_PASS' | 'EMERGENCY' | 'STAFF';
-    status: 'ACTIVE' | 'EXITED' | 'CANCELLED';
-    createdBy: string; // Admin ID
+    type: string;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
-
-// In-memory store for demo purposes (would be DB in prod)
-const OFFLINE_TICKETS: OfflineTicket[] = [];
 
 export class OfflineTicketService {
 
     /**
      * Create a new offline ticket
      */
-    static async createTicket(ticketData: Omit<OfflineTicket, 'id' | 'timestamp' | 'status'>): Promise<OfflineTicket> {
+    static async createTicket(ticketData: any) {
         // 1. Duplicate Vehicle Check (only check ACTIVE tickets)
-        const isDuplicate = OFFLINE_TICKETS.some(t =>
-            t.vehicleNo.toUpperCase() === ticketData.vehicleNo.toUpperCase() &&
-            t.status === 'ACTIVE'
-        );
+        const existingTicket = await prisma.offlineTicket.findFirst({
+            where: {
+                vehicleNo: ticketData.vehicleNo.toUpperCase(),
+                status: 'ACTIVE'
+            }
+        });
 
-        if (isDuplicate) {
+        if (existingTicket) {
             throw new Error(`Vehicle ${ticketData.vehicleNo} already has an active ticket.`);
         }
 
         // 2. Create Ticket
-        const newTicket: OfflineTicket = {
-            ...ticketData,
-            id: `OFF-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            timestamp: new Date(),
-            status: 'ACTIVE',
-            vehicleNo: ticketData.vehicleNo.toUpperCase()
-        };
-
-        OFFLINE_TICKETS.push(newTicket);
-        return newTicket;
+        return await prisma.offlineTicket.create({
+            data: {
+                ...ticketData,
+                vehicleNo: ticketData.vehicleNo.toUpperCase(),
+                status: 'ACTIVE'
+            }
+        });
     }
 
     /**
      * Get all tickets for a specific spot
      */
-    static async getTicketsBySpot(spotId: string): Promise<OfflineTicket[]> {
-        return OFFLINE_TICKETS.filter(t => t.spotId === spotId && t.status === 'ACTIVE');
+    static async getTicketsBySpot(spotId: string) {
+        return await prisma.offlineTicket.findMany({
+            where: { spotId, status: 'ACTIVE' },
+            orderBy: { createdAt: 'desc' }
+        });
     }
 
     /**
      * Get all tickets
      */
-    static async getAllTickets(): Promise<OfflineTicket[]> {
-        return OFFLINE_TICKETS;
+    static async getAllTickets() {
+        return await prisma.offlineTicket.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    /**
+     * Verify/Search for a ticket (Offline or Online Parking)
+     */
+    static async verifyTicket(query: string) {
+        const q = query.toUpperCase();
+
+        // 1. Check Offline Tickets
+        const offlineTicket = await prisma.offlineTicket.findFirst({
+            where: {
+                OR: [
+                    { id: { contains: q, mode: 'insensitive' } },
+                    { vehicleNo: { contains: q, mode: 'insensitive' } }
+                ]
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (offlineTicket) {
+            return { ...offlineTicket, source: 'OFFLINE' };
+        }
+
+        // 2. Check Online Parking Bookings
+        const onlineBooking = await prisma.parkingBooking.findFirst({
+            where: {
+                OR: [
+                    { id: { contains: q, mode: 'insensitive' } },
+                    { vehicleNo: { contains: q, mode: 'insensitive' } },
+                    { qrCode: { contains: q, mode: 'insensitive' } }
+                ]
+            },
+            include: {
+                facility: {
+                    include: { location: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (onlineBooking) {
+            return {
+                ...onlineBooking,
+                source: 'ONLINE',
+                // Map fields for UI consistency if needed, but let's keep them and handle in UI
+                name: onlineBooking.vehicleNo, // Placeholder or fetch user name
+                spotId: onlineBooking.facility.location.name,
+                type: 'ONLINE_BOOKING',
+            };
+        }
+
+        return null;
     }
 
     /**
      * Mark ticket as exited
      */
-    static async markExit(ticketId: string): Promise<boolean> {
-        const ticket = OFFLINE_TICKETS.find(t => t.id === ticketId);
-        if (!ticket) return false;
+    static async markExit(id: string, source: string = 'OFFLINE') {
+        if (source === 'ONLINE') {
+            return await prisma.parkingBooking.update({
+                where: { id },
+                data: {
+                    status: 'COMPLETED',
+                    paymentStatus: 'COMPLETED',
+                    checkOutTime: new Date()
+                }
+            });
+        }
 
-        ticket.status = 'EXITED';
-        return true;
+        return await prisma.offlineTicket.update({
+            where: { id },
+            data: { status: 'EXITED' }
+        });
     }
 
     /**
-     * Get stats for dashboard
+     * Get stats for dashboard (including offline data)
      */
     static async getStats() {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const [totalToday, activeNow, revenueData] = await Promise.all([
+            prisma.offlineTicket.count({
+                where: { createdAt: { gte: todayStart } }
+            }),
+            prisma.offlineTicket.count({
+                where: { status: 'ACTIVE' }
+            }),
+            prisma.offlineTicket.findMany({
+                where: {
+                    type: 'OFFLINE_PAID',
+                    createdAt: { gte: todayStart }
+                },
+                select: { vehicleType: true }
+            })
+        ]);
+
+        const revenue = revenueData.reduce((acc: number, t: { vehicleType: string }) => {
+            const price = t.vehicleType === 'CAR' ? 50 : t.vehicleType === 'BUS' ? 100 : 20;
+            return acc + price;
+        }, 0);
+
         return {
-            totalToday: OFFLINE_TICKETS.filter(t => t.timestamp.getDate() === new Date().getDate()).length,
-            activeNow: OFFLINE_TICKETS.filter(t => t.status === 'ACTIVE').length,
-            revenue: OFFLINE_TICKETS
-                .filter(t => t.type === 'OFFLINE_PAID' && t.timestamp.getDate() === new Date().getDate())
-                .reduce((acc, t) => acc + (t.vehicleType === 'CAR' ? 50 : t.vehicleType === 'BUS' ? 100 : 20), 0)
+            totalToday,
+            activeNow,
+            revenue
         };
     }
 }

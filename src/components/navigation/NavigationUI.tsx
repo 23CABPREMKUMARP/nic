@@ -140,7 +140,7 @@ export default function NavigationUI({
     if (isMinimized) {
         return (
             <div
-                className="fixed top-4 left-4 right-4 bg-white rounded-2xl shadow-xl p-4 z-[1000] cursor-pointer"
+                className="fixed top-24 left-4 right-4 bg-white rounded-2xl shadow-xl p-4 z-[1000] cursor-pointer"
                 onClick={() => setIsMinimized(false)}
             >
                 <div className="flex items-center justify-between">
@@ -164,7 +164,7 @@ export default function NavigationUI({
     }
 
     return (
-        <div className="fixed top-4 left-4 right-4 z-[1000] flex flex-col gap-3">
+        <div className="fixed top-24 left-4 right-4 z-[1000] flex flex-col gap-3">
             {/* Main Navigation Card */}
             <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
                 {/* Header with ETA */}

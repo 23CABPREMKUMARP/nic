@@ -1,6 +1,7 @@
 import { checkAdmin, unauthorized } from "@/lib/auth-check";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { SMSService } from "@/services/sms/SMSService";
 
 export async function POST(req: Request) {
     try {
@@ -16,7 +17,10 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "No Pass ID" }, { status: 400 });
         }
 
-        const pass = await prisma.pass.findUnique({ where: { id: passId } });
+        const pass = await prisma.pass.findUnique({
+            where: { id: passId },
+            include: { user: true }
+        });
 
         if (!pass) return NextResponse.json({ error: "Pass not found" }, { status: 404 });
 
@@ -34,7 +38,16 @@ export async function POST(req: Request) {
             include: { user: true }
         });
 
+        // Trigger SMS Notification (Non-blocking)
+        const phone = updatedPass.mobile;
+        if (phone) {
+            SMSService.sendActivationSMS(phone, {
+                time: new Date().toLocaleTimeString()
+            }).catch(err => console.error("[SMS Activation] Callback error:", err));
+        }
+
         return NextResponse.json({ success: true, pass: updatedPass });
+
 
     } catch (error) {
         console.error(error);

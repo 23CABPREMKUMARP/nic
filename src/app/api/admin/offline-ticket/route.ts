@@ -27,6 +27,12 @@ export async function GET(request: Request) {
             return NextResponse.json(stats);
         }
 
+        const query = searchParams.get('query');
+        if (query) {
+            const ticket = await OfflineTicketService.verifyTicket(query);
+            return NextResponse.json({ ticket });
+        }
+
         if (spotId) {
             const tickets = await OfflineTicketService.getTicketsBySpot(spotId);
             return NextResponse.json(tickets);
@@ -58,5 +64,23 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message || 'Failed to create ticket' }, { status: 400 });
+    }
+}
+
+// PATCH: Mark Exit or Update Status
+export async function PATCH(request: Request) {
+    try {
+        const body = await request.json();
+        const { id, source } = body;
+
+        if (!id) {
+            return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
+        }
+
+        const ticket = await OfflineTicketService.markExit(id, source);
+        return NextResponse.json({ success: true, ticket });
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message || 'Failed to update status' }, { status: 400 });
     }
 }

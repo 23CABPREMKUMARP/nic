@@ -22,9 +22,10 @@ import { HillSafety } from '@/services/navigation/HillSafety';
 import { OOTY_SPOTS } from '@/data/ootyMapData';
 import { RedirectAdvisor, SuggestionCard } from '@/services/redirect/RedirectAdvisor';
 import { ThumbnailUI } from '@/components/traffic/ThumbnailUI';
-import { AdminCrowdPanel } from '@/components/admin/AdminCrowdPanel';
-import { AdminValidator } from '@/components/admin/AdminValidator';
 import { LiveConsent } from '@/components/eco/LiveConsent';
+import { GoogleMapContainer } from '@/components/maps/GoogleMapContainer';
+import CrowdAnalysisPanel from '@/components/admin/CrowdAnalysisPanel';
+import CrowdHeatmap from '@/components/analytics/CrowdHeatmap';
 
 
 // Dynamic import for MapContainer (Leaflet doesn't work well with SSR)
@@ -78,6 +79,8 @@ export default function MapPage() {
     const [redirectSuggestion, setRedirectSuggestion] = useState<SuggestionCard | null>(null);
     const [showAdminPanel, setShowAdminPanel] = useState(false);
     const [ecoConsent, setEcoConsent] = useState(false);
+    const [isEcoMode, setIsEcoMode] = useState(false);
+    const [showHeatmap, setShowHeatmap] = useState(false);
 
 
     const watchIdRef = useRef<number | null>(null);
@@ -307,17 +310,21 @@ export default function MapPage() {
             <main className="flex-1 relative">
                 {/* Map */}
                 <div className="absolute inset-0">
-                    <MapContainer
-                        center={[11.4102, 76.6950]}
-                        zoom={13}
-                        userLocation={userLocation}
-                        destination={destination}
-                        route={route?.polyline}
-                        onSpotClick={handleMapSpotClick}
-                        showParking={showParking}
-                        showHazards={showHazards}
-                        className="w-full h-full"
-                    />
+                    {isEcoMode ? (
+                        <GoogleMapContainer spots={OOTY_SPOTS} userId="test-user" />
+                    ) : (
+                        <MapContainer
+                            center={[11.4102, 76.6950]}
+                            zoom={13}
+                            userLocation={userLocation}
+                            destination={destination}
+                            route={route?.polyline}
+                            onSpotClick={handleMapSpotClick}
+                            showParking={showParking}
+                            showHazards={showHazards}
+                            className="w-full h-full"
+                        />
+                    )}
                 </div>
 
                 {/* Navigation UI (when navigating) */}
@@ -337,7 +344,7 @@ export default function MapPage() {
 
                 {/* Search Bar (when not navigating) */}
                 {!isNavigating && (
-                    <div className="absolute top-4 left-4 right-4 z-[500]">
+                    <div className="absolute top-24 left-4 right-4 z-[500]">
                         <SearchBar
                             onSelect={handleSpotSelect}
                             placeholder="Where would you like to go?"
@@ -349,7 +356,7 @@ export default function MapPage() {
                 {!isNavigating && (
                     <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className="absolute top-24 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition"
+                        className="absolute top-44 right-4 z-[500] bg-white p-3 rounded-full shadow-lg hover:bg-gray-50 transition"
                     >
                         <Filter className="w-5 h-5 text-gray-600" />
                     </button>
@@ -357,7 +364,7 @@ export default function MapPage() {
 
                 {/* Visual Navigation Buttons */}
                 {!isNavigating && (
-                    <div className="absolute top-24 left-4 z-[500] flex flex-col gap-2">
+                    <div className="absolute top-44 left-4 z-[500] flex flex-col gap-2">
                         {/* Admin Toggle */}
                         <button
                             onClick={() => setShowAdminPanel(!showAdminPanel)}
@@ -366,12 +373,31 @@ export default function MapPage() {
                         >
                             <AlertTriangle className="w-5 h-5 text-red-600" />
                         </button>
+
+                        {/* Eco Mode Toggle */}
+                        <button
+                            onClick={() => setIsEcoMode(!isEcoMode)}
+                            className={`p-3 rounded-full shadow-lg transition ${isEcoMode ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-600'}`}
+                            title="Eco Mode (Google Maps)"
+                        >
+                            <TreePine className="w-5 h-5" />
+                        </button>
                     </div>
+                )}
+
+                {/* Crowd Analysis Panel */}
+                {showAdminPanel && !isNavigating && (
+                    <CrowdAnalysisPanel onClose={() => setShowAdminPanel(false)} />
+                )}
+
+                {/* Heatmap Overlay */}
+                {showHeatmap && (
+                    <CrowdHeatmap />
                 )}
 
                 {/* Filter Panel */}
                 {showFilters && !isNavigating && (
-                    <div className="absolute top-36 right-4 z-[500] bg-white rounded-2xl shadow-xl p-4 w-64">
+                    <div className="absolute top-56 right-4 z-[500] bg-white rounded-2xl shadow-xl p-4 w-64">
                         <div className="flex items-center justify-between mb-4">
                             <span className="font-medium">Map Layers</span>
                             <button onClick={() => setShowFilters(false)}>
@@ -397,6 +423,16 @@ export default function MapPage() {
                             />
                             <AlertTriangle className="w-5 h-5 text-amber-500" />
                             <span>Hill Alerts</span>
+                        </label>
+                        <label className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={showHeatmap}
+                                onChange={(e) => setShowHeatmap(e.target.checked)}
+                                className="w-4 h-4 rounded text-blue-500"
+                            />
+                            <Layers className="w-5 h-5 text-purple-500" />
+                            <span>Crowd Heatmap</span>
                         </label>
                     </div>
                 )}
@@ -582,24 +618,6 @@ export default function MapPage() {
                             setRedirectSuggestion(null);
                         }}
                     />
-                )}
-
-                {/* Admin Panel Overlay */}
-                {showAdminPanel && (
-                    <div className="fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                        <div className="relative w-full max-w-4xl max-h-[90vh] overflow-auto">
-                            <button
-                                onClick={() => setShowAdminPanel(false)}
-                                className="absolute top-4 right-4 z-50 bg-white p-2 rounded-full shadow-lg"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                            <AdminCrowdPanel />
-                            <div className="mt-8">
-                                <AdminValidator />
-                            </div>
-                        </div>
-                    </div>
                 )}
 
                 <LiveConsent onConsent={(granted) => {

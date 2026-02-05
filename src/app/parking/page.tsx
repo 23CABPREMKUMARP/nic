@@ -172,7 +172,7 @@ function ParkingBookingContent() {
                             <p><strong className="text-gray-500">Location:</strong> <span className="font-semibold">{bookingSuccess.facility?.location?.name}</span></p>
                             <p><strong className="text-gray-500">Vehicle:</strong> <span className="font-semibold">{bookingSuccess.vehicleNo} ({bookingSuccess.vehicleType})</span></p>
                             <p><strong className="text-gray-500">Time:</strong> <span className="font-semibold">{new Date(bookingSuccess.startTime).toLocaleString()}</span></p>
-                            <p><strong className="text-gray-500">Amount Paid:</strong> <span className="text-green-600 font-bold">₹{bookingSuccess.amount}</span></p>
+                            <p><strong className="text-gray-500">Amount to Pay:</strong> <span className="text-amber-600 font-bold">₹{bookingSuccess.amount} (Pay at Site)</span></p>
                         </div>
 
                         <Button onClick={() => setBookingSuccess(null)} className="w-full bg-gray-900 hover:bg-black text-white">Book Another</Button>
@@ -310,7 +310,7 @@ function ParkingBookingContent() {
 
                                 {/* Summary */}
                                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 mt-4 flex justify-between items-center">
-                                    <span className="text-gray-600 font-medium">Total Payable</span>
+                                    <span className="text-gray-600 font-medium">Estimated Charge</span>
                                     <span className="text-3xl font-bold text-gray-900">₹{totalAmount}</span>
                                 </div>
 
@@ -319,7 +319,7 @@ function ParkingBookingContent() {
                                     disabled={loading || !date || !startTime || !vehicleNo}
                                     className="w-full bg-green-700 hover:bg-green-800 h-12 text-lg font-bold shadow-green-900/20 shadow-lg text-white"
                                 >
-                                    {loading ? 'Processing...' : `Pay ₹${totalAmount} & Book`}
+                                    {loading ? 'Processing...' : `Reserve Slot (Pay at Site)`}
                                 </Button>
                             </div>
                         )}

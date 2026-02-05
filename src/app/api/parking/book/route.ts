@@ -69,7 +69,7 @@ export async function POST(req: Request) {
                 vehicleNo,
                 vehicleType,
                 amount,
-                paymentStatus: "COMPLETED", // Simulating instant fake payment
+                paymentStatus: "PENDING", // Pay on site/exit
                 status: "BOOKED",
                 qrCode: `PARK-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`
             },

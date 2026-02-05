@@ -4,6 +4,7 @@
  */
 
 import { CrowdEngine, CrowdLevel } from '@/services/crowdEngine';
+import { CrowdAnalyzer } from '@/services/analytics/crowdAnalyzer';
 import { TrafficService } from '@/services/trafficService';
 import { getWeather } from '@/services/weatherService';
 import { OOTY_SPOTS, OOTY_ROADS, OOTY_JUNCTIONS } from '@/data/ootyMapData';
@@ -98,22 +99,35 @@ export class TrafficEngine {
             throw new Error(`Spot not found: ${spotId}`);
         }
 
-        // Calculate congestion using the model
-        const factors = await CongestionModel.calculateFactors(spot.name);
-        const score = CongestionModel.computeScore(factors);
-        const level = TrafficShaping.getLevel(score);
-        const trend = await this.calculateTrend(spotId, score);
-        const prediction = await this.getPrediction(spotId);
+        // Calculate congestion using the new CrowdAnalyzer module
+        const analysis = await CrowdAnalyzer.analyzeSpot(spot.name);
+
+        const score = analysis.metrics.crowdScore;
+        const level = analysis.metrics.crowdLevel === 'CRITICAL' ? 'CRITICAL' as TrafficLevel
+            : analysis.metrics.crowdLevel === 'HIGH' ? 'HEAVY' as TrafficLevel
+                : analysis.metrics.crowdLevel === 'MEDIUM' ? 'MODERATE' as TrafficLevel
+                    : 'LOW' as TrafficLevel;
 
         const congestion: SpotCongestion = {
             spotId,
             name: spot.name,
             score,
             level,
-            trend,
-            factors,
+            trend: analysis.metrics.trend,
+            factors: {
+                ePassScore: analysis.metrics.factors.epass,
+                parkingScore: analysis.metrics.factors.parking,
+                historicalScore: analysis.metrics.factors.historical,
+                weatherScore: analysis.metrics.factors.weather,
+                eventScore: 0,
+                userReportsScore: 0
+            },
             lastUpdated: new Date(),
-            prediction
+            prediction: analysis.metrics.prediction2h.map((s, i) => ({
+                hour: new Date().getHours() + i,
+                predictedScore: s,
+                confidence: 0.9 - (i * 0.1)
+            }))
         };
 
         // Cache result

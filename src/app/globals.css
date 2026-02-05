@@ -185,6 +185,11 @@ body {
   font-family: var(--font-sans);
   overflow-x: hidden;
   min-height: 100vh;
+  background-image:
+    linear-gradient(to bottom, rgba(15, 59, 40, 0.8), rgba(15, 59, 40, 1)),
+    url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' viewBox='0 0 1600 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 800V600C100 550 200 650 300 600C400 550 500 450 600 500C700 550 800 650 900 600C1000 550 1100 450 1200 500C1300 550 1400 650 1500 600C1550 575 1600 585 1600 585V800H0Z' fill='%23059669' fill-opacity='0.1'/%3E%3Cpath d='M0 800V700C150 650 250 750 400 700C550 650 650 550 800 600C950 650 1050 750 1200 700C1350 650 1450 550 1600 600V800H0Z' fill='%23047857' fill-opacity='0.2'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 /* Glassmorphism */

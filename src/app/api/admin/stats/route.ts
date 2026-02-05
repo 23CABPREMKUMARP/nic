@@ -8,39 +8,58 @@ export async function GET() {
     if (!admin) return unauthorized();
 
     try {
-        const totalPasses = await prisma.pass.count();
-        const activePasses = await prisma.pass.count({ where: { status: 'ACTIVE' } });
-        const todayPasses = await prisma.pass.count({
-            where: {
-                visitDate: {
-                    gte: new Date(new Date().setHours(0, 0, 0, 0)),
-                    lt: new Date(new Date().setHours(23, 59, 59, 999))
+        const [totalPasses, activePasses, todayPasses, parkingOccupied, revenueData, offlineStats] = await Promise.all([
+            prisma.pass.count(),
+            prisma.pass.count({ where: { status: 'ACTIVE' } }),
+            prisma.pass.count({
+                where: {
+                    visitDate: {
+                        gte: new Date(new Date().setHours(0, 0, 0, 0)),
+                        lt: new Date(new Date().setHours(23, 59, 59, 999))
+                    }
                 }
-            }
+            }),
+            prisma.parkingSlot.count({ where: { isOccupied: true } }),
+            prisma.parkingBooking.aggregate({
+                _sum: { amount: true },
+                where: { paymentStatus: 'PAID' }
+            }),
+            // Use local service-like logic if possible, or direct prisma
+            prisma.offlineTicket.aggregate({
+                _sum: { members: true },
+                _count: { id: true },
+                where: {
+                    createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+                }
+            })
+        ]);
+
+        // Calculate Offline Revenue (approx)
+        const offlineRevenueData = await prisma.offlineTicket.findMany({
+            where: {
+                type: 'OFFLINE_PAID',
+                createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+            },
+            select: { vehicleType: true }
         });
+        const offlineRevenue = offlineRevenueData.reduce((acc: number, t: { vehicleType: string }) => {
+            const price = t.vehicleType === 'CAR' ? 50 : t.vehicleType === 'BUS' ? 100 : 20;
+            return acc + price;
+        }, 0);
 
-        const parkingOccupied = await prisma.parkingSlot.count({ where: { isOccupied: true } });
-
-        // Recent logs: actually just recent passes for now as logs model is separate but simplistic
         const recentPasses = await prisma.pass.findMany({
             take: 5,
             orderBy: { updatedAt: 'desc' },
             include: { user: true }
         });
 
-        const revenueData = await prisma.parkingBooking.aggregate({
-            _sum: { amount: true },
-            where: { paymentStatus: 'PAID' }
-        });
-
-        // Calculate theoretical pass fees (e.g. 50 per pass) since no explicit field
         const passRevenue = totalPasses * 50;
-        const totalRevenue = (revenueData._sum.amount || 0) + passRevenue;
+        const totalRevenue = (revenueData._sum.amount || 0) + passRevenue + offlineRevenue;
 
         return NextResponse.json({
-            totalVisitors: totalPasses,
-            activeNow: activePasses,
-            todayVisitors: todayPasses,
+            totalVisitors: totalPasses + (offlineStats._count.id || 0),
+            activeNow: activePasses + (await prisma.offlineTicket.count({ where: { status: 'ACTIVE' } })),
+            todayVisitors: todayPasses + (offlineStats._count.id || 0),
             parkingOccupied,
             totalRevenue,
             recentActivity: recentPasses

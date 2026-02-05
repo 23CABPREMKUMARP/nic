@@ -18,10 +18,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  ecoPoints     Int      @default(0)
+  
   passes        Pass[]
   notifications Notification[]
   adminLogs     AdminLog[]
   parkingBookings ParkingBooking[]
+  ecoOrders     EcoStoreOrder[]
+  certificates  UserCertificate[]
+  locationHistory EcoLocationHistory[]
 }
 
 model Pass {
@@ -190,7 +195,96 @@ model AdminLog {
   admin     User     @relation(fields: [adminId], references: [id])
 }
 
+
 model SystemSettings {
   key   String @id
   value String
+}
+
+model OfflineTicket {
+  id          String   @id @default(uuid())
+  vehicleNo   String
+  name        String
+  mobile      String?
+  members     Int      @default(1)
+  vehicleType String   // CAR, BUS, BIKE, EMERGENCY
+  spotId      String
+  type        String   // OFFLINE_PAID, GOVT_PASS, EMERGENCY, STAFF
+  status      String   @default("ACTIVE") // ACTIVE, EXITED, CANCELLED
+  createdBy   String   @default("admin")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([vehicleNo])
+}
+
+model EcoScoreRule {
+  id          String   @id @default(uuid())
+  actionType  String   @unique // e.g., "SHARE_LOCATION", "VISIT_HOTSPOT", "PUBLIC_TRANSPORT"
+  points      Int
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model EcoStoreProduct {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  pricePoints Int
+  priceCash   Float
+  category    String   // "Chocolates", "Tea", "Oil", "Handicrafts"
+  imageUrls   String[]
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  orderItems  EcoStoreOrderItem[]
+}
+
+model EcoStoreOrder {
+  id            String   @id @default(uuid())
+  userId        String
+  totalPoints   Int
+  totalCash     Float
+  status        String   @default("PENDING") // PENDING, PAID, SHIPPED, COMPLETED
+  paymentId     String?  // Razorpay/Stripe
+  createdAt     DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id])
+  items         EcoStoreOrderItem[]
+}
+
+model EcoStoreOrderItem {
+  id        String          @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  points    Int             // Points at time of purchase
+  cash      Float           // Cash at time of purchase
+  
+  order     EcoStoreOrder   @relation(fields: [orderId], references: [id])
+  product   EcoStoreProduct @relation(fields: [productId], references: [id])
+}
+
+model UserCertificate {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String   // Certificate name
+  type        String   // "VISIT", "CLEANLINESS", "GENERAL"
+  pdfUrl      String?
+  issuedAt    DateTime @default(now())
+  metadata    Json?    // Visited places, points earned etc
+  
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model EcoLocationHistory {
+  id          String   @id @default(uuid())
+  userId      String
+  latitude    Float
+  longitude   Float
+  spotId      String?  // If it matches a hotspot
+  timestamp   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id])
 }
