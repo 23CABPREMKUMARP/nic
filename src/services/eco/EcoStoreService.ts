@@ -23,6 +23,26 @@ export class EcoStoreService {
     }
 
     /**
+     * Get user eco points
+     */
+    static async getUserPoints(userId: string) {
+        try {
+            const user = await (prisma as any).user.findUnique({
+                where: { id: userId },
+                select: { ecoPoints: true }
+            });
+            return {
+                totalPoints: user?.ecoPoints || 0,
+                level: 'Green Explorer',
+                badge: '🌱'
+            };
+        } catch (e) {
+            console.error("Failed to fetch eco points:", e);
+            return { totalPoints: 0, level: 'Green Explorer', badge: '🌱' };
+        }
+    }
+
+    /**
      * Handle point + cash checkout
      */
     static async checkout(data: CheckoutRequest) {

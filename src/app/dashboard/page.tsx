@@ -7,7 +7,9 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { DashboardCardAnimator } from "@/components/DashboardAnimator";
 import ActivePassDisplay from "@/components/ActivePassDisplay";
-import { CrowdEngine } from "@/services/crowdEngine";
+import { TrafficEngine } from '@/services/traffic/trafficEngine';
+import { CrowdAnalyzer } from '@/services/analytics/crowdAnalyzer';
+import { EcoStoreService } from '@/services/eco/EcoStoreService';
 import { TrafficService } from "@/services/trafficService";
 import { EcoStatusBadge } from "@/components/eco/EcoStatusBadge";
 
@@ -20,48 +22,82 @@ export default async function Dashboard() {
     }
 
     // Fetch Active Pass with full details
-    const activePasses = await prisma.pass.findMany({
-        where: {
-            userId: user.id,
-            status: { in: ['ACTIVE', 'USED', 'SUBMITTED', 'PENDING'] }
-        },
-        include: {
-            parkingBookings: {
-                where: { status: { not: 'CANCELLED' } },
-                include: {
-                    facility: {
-                        include: { location: true }
+    let activePass = null;
+    try {
+        const activePasses = await prisma.pass.findMany({
+            where: {
+                userId: user.id,
+                status: { in: ['ACTIVE', 'USED', 'SUBMITTED', 'PENDING'] }
+            },
+            include: {
+                parkingBookings: {
+                    where: { status: { not: 'CANCELLED' } },
+                    include: {
+                        facility: {
+                            include: { location: true }
+                        }
                     }
                 }
-            }
-        },
-        orderBy: { visitDate: 'desc' },
-        take: 1
-    });
-
-    const activePass = activePasses[0] || null;
+            },
+            orderBy: { visitDate: 'desc' },
+            take: 1
+        });
+        activePass = activePasses[0] || null;
+    } catch (e) {
+        console.error("Dashboard pass fetch failed:", e);
+    }
 
     // Fetch dynamic stats for dashboard
-    const parkingSpots = await prisma.location.findMany({ where: { type: 'PARKING' }, take: 3 });
+    let parkingSpots: any[] = [];
+    try {
+        parkingSpots = await prisma.location.findMany({ where: { type: 'PARKING' }, take: 3 });
+    } catch (e) {
+        // Fallback or empty
+    }
     const dynamicParking = await Promise.all(parkingSpots.map(async loc => {
-        const crowd = await CrowdEngine.analyzeLocation(loc.name);
-        return { name: loc.name, level: crowd.level };
+        try {
+            const congestion = await TrafficEngine.getCongestionScore(loc.id); // Use ID ideally, but trafficEngine uses ID. 
+            // If loc.id is not in traffic engine map, it falls back? TrafficEngine expects ID.
+            // OOTY_SPOTS IDs are like 'ooty-lake'. Location DB IDs are UUIDs.
+            // We need to match by name if IDs don't match. 
+            // TrafficEngine.getCongestionScore uses ID. If we don't have ID mapping, we might fail.
+            // Let's use CrowdAnalyzer directly by name as backup or use TrafficEngine if we can match.
+
+            // Safer: Use CrowdAnalyzer directly via TrafficEngine? 
+            // Actually TrafficEngine.getCongestionScore expects an ID from OOTY_SPOTS.
+            // Let's try to find the matching OOTY_SPOT by name.
+
+            // Simplified: Just use the name for display and simulate level for now to be safe,
+            // OR use the new CrowdAnalyzer.analyzeSpot(loc.name) which uses name.
+            const analysis = await CrowdAnalyzer.analyzeSpot(loc.name);
+
+            let level = 'SAFE';
+            if (analysis.metrics.crowdLevel === 'CRITICAL' || analysis.metrics.crowdLevel === 'HIGH') level = 'OVERFLOW';
+            else if (analysis.metrics.crowdLevel === 'MEDIUM') level = 'BUSY';
+
+            return { name: loc.name, level };
+        } catch {
+            return { name: loc.name, level: 'SAFE' };
+        }
     }));
 
     const alerts = [];
-    const trafficLake = await TrafficService.estimateTraffic('Ooty Lake');
-    if (trafficLake.status === 'HEAVY') {
-        alerts.push({ title: 'Traffic Alert', msg: `Heavy congestion near Ooty Lake. Delay: +${trafficLake.delayMinutes} min.` });
-    }
-    const trafficGarden = await TrafficService.estimateTraffic('Botanical Garden');
-    if (trafficGarden.status === 'HEAVY') {
-        alerts.push({ title: 'Traffic Alert', msg: `Heavy congestion near Botanic Garden. Delay: +${trafficGarden.delayMinutes} min.` });
-    }
+    try {
+        const trafficLake = await TrafficService.estimateTraffic('Ooty Lake');
+        if (trafficLake.status === 'HEAVY') {
+            alerts.push({ title: 'Traffic Alert', msg: `Heavy congestion near Ooty Lake. Delay: +${trafficLake.delayMinutes} min.` });
+        }
+    } catch { } // Swallow errors
 
+    try {
+        const trafficGarden = await TrafficService.estimateTraffic('Botanical Garden');
+        if (trafficGarden.status === 'HEAVY') {
+            alerts.push({ title: 'Traffic Alert', msg: `Heavy congestion near Botanic Garden. Delay: +${trafficGarden.delayMinutes} min.` });
+        }
+    } catch { }
 
-    // Fetch Eco Stats (Local API)
-    const ecoRes = await fetch(`http://localhost:3000/api/eco/points?userId=${user.id}`, { cache: 'no-store' });
-    const ecoStats = ecoRes.ok ? await ecoRes.json() : { totalPoints: 0, level: 'Green Explorer', badge: '🌱' };
+    // Fetch Eco Stats (Direct Service Call)
+    const ecoStats = await EcoStoreService.getUserPoints(user.id);
 
 
     return (
